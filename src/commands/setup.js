@@ -1,10 +1,11 @@
-const fs = require('fs');
+const fs = require('fs/promises');
 const prompt = require('prompt');
 prompt.message = '🔆 ';
 prompt.delimiter = '';
 prompt.colors = false;
 
 const writeToFile = (api, email) => {
+  fs.writeFileSync('../../.env'
   console.log([api, email]); 
 };
 
