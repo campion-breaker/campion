@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const FormData = require("form-data");
-require("dotenv").config();
+const configDir = require("/src/utils/configDir");
+require("dotenv").config({ path: `${configDir}/.env` });
 
 async function getAccountId() {
   const data = await fetch("https://api.cloudflare.com/client/v4/accounts", {

@@ -1,9 +1,6 @@
 const fs = require("fs");
 const prompt = require("prompts");
-const os = require("os");
-const homedir = os.homedir();
-const configDir = ".campion";
-const absolutePath = `${homedir}/${configDir}`;
+const absolutePath = require('../utils/configDir');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
