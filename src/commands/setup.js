@@ -8,6 +8,11 @@ const writeToFile = (api, email) => {
   fs.writeFileSync("../../.env", `APIKEY=${api}\nEMAIL=${email}`);
 };
 
+const retrieveExistingValues = () => {
+  const existingENV = fs.readFileSync("../../.env", "utf8");
+  console.log(existingENV);
+};
+
 const promptUser = () => {
   const emailMsg = "Enter the email associated with your Cloudflare account:";
   const apiMsg = "Enter your Cloudflare Global API Key:";
@@ -20,7 +25,7 @@ const promptUser = () => {
 };
 
 const configMsg = () => {
-  console.log("Campion Config");
+  console.log("Campion Config\n");
 };
 
 const configGoodbye = () => {
@@ -29,7 +34,11 @@ const configGoodbye = () => {
 
 const setup = () => {
   configMsg();
-  promptUser();
+  try {
+    retrieveExistingValues();
+  } catch (e) {
+    promptUser();
+  }
 };
 
 module.exports = setup;
