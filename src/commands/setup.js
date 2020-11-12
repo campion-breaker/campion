@@ -1,11 +1,8 @@
 const fs = require("fs");
 const prompt = require("prompts");
-prompt.message = "🔆 ";
-prompt.delimiter = "";
-prompt.colors = false;
 
 const configMsg = () => {
-  console.log("Campion Config\n");
+  console.log("Campion Config:\n");
 };
 
 const configGoodbye = () => {
