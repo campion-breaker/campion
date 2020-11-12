@@ -18,7 +18,9 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "form-data": "^3.0.0",
+    "minimist": "^1.2.5",
     "node-fetch": "^2.6.1",
-    "prettier": "^2.1.2"
+    "prettier": "^2.1.2",
+    "prompt": "^1.0.0"
   }
 }
