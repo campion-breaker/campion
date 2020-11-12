@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Circuit Breaker",
   "main": "campionApiTesting.js",
+  "bin": {
+    "campion": "bin/campion.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
