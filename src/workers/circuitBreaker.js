@@ -1,27 +1,37 @@
-const { v4: UUID } = require('uuid');
+const { v4: UUID } = require("uuid");
 
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
   const service = await getServiceObj(serviceId);
-  if (service === null) return new Response("Circuit breaker doesn't exist", {status: 404});
+
+  if (service === null) {
+    return new Response("Circuit breaker doesn't exist", { status: 404 });
+  }
 
   if (service.STATE === "OPEN") {
-    return new Response('Circuit is open', {status: 504});
+    await setStateWhenOpen(service, serviceId);
+
+    if (service.STATE === "OPEN") {
+      return new Response("Circuit is open", { status: 504 });
+    }
   } else if (service.STATE === "HALF-OPEN" && !canRequestProceed(service)) {
-    return new Response('Circuit is half-open', {status: 504});
+    return new Response("Circuit is half-open", { status: 504 });
   }
 
   const response = await processRequest(request, service, serviceId);
   await updateCircuitState(service, serviceId, response);
-  return new Response(response.body, {status: response.status, headers: response.headers});
+  return new Response(response.body, {
+    status: response.status,
+    headers: response.headers,
+  });
 }
 
 function getServiceId(url) {
-  return new URL(url).pathname.replace('/', '');
+  return new URL(url).pathname.replace("/", "");
 }
 
 async function getServiceObj(serviceId) {
-  if (serviceId === '') return null;
+  if (serviceId === "") return null;
   const service = await SERVICES_CONFIG.get(serviceId);
   return JSON.parse(service);
 }
@@ -38,7 +48,11 @@ async function processRequest(request, service) {
 
   const timeoutPromise = new Promise((resolutionFunc, rejectionFunc) => {
     timeoutId = setTimeout(() => {
-      resolutionFunc({ failure: true, kvKey: "@NETWORK_FAILURE_" + UUID(), status: 522 });
+      resolutionFunc({
+        failure: true,
+        kvKey: "@NETWORK_FAILURE_" + UUID(),
+        status: 522,
+      });
     }, service.MAX_LATENCY);
   });
 
@@ -64,44 +78,55 @@ async function processRequest(request, service) {
   });
 }
 
+async function setStateWhenClosed(service, serviceId) {
+  const { serviceFailures, networkFailures } = await requestLogCount(serviceId);
+
+  if (
+    serviceFailures >= service.SERVICE_FAILURE_THRESHOLD ||
+    networkFailures >= service.NETWORK_FAILURE_THRESHOLD
+  ) {
+    await flipCircuitState(serviceId, service, "OPEN");
+  }
+}
+
+async function setStateWhenOpen(service, serviceId) {
+  const now = Date.now();
+  const oldDate = Number(service.UPDATED_TIME);
+  const differenceInSecs = (now - oldDate) / 1000;
+
+  if (differenceInSecs >= service.ERROR_TIMEOUT) {
+    await flipCircuitState(serviceId, service, "HALF-OPEN");
+  }
+}
+
+async function setStateWhenHalfOpen(service, serviceId) {
+  const { successes } = await requestLogCount(serviceId);
+
+  if (successes >= 1) {
+    await flipCircuitState(serviceId, service, "CLOSED");
+  } else if (
+    networkFailures >= service.NETWORK_FAILURE_THRESHOLD ||
+    serviceFailures >= service.SERVICE_FAILURE_THRESHOLD
+  ) {
+    await flipCircuitState(serviceId, service, "OPEN");
+  }
+}
+
 async function updateCircuitState(service, serviceId, response) {
-  if (response.failure || (service.STATE === 'HALF-OPEN' && !response.failure)) {
+  if (
+    response.failure ||
+    (service.STATE === "HALF-OPEN" && !response.failure)
+  ) {
     await updateRequestLog(response.kvKey, serviceId, service);
   }
 
-  await setState(service, serviceId);
-}
-
-async function setState(service, serviceId) {
-  const { serviceFailures, networkFailures, successes } = await requestLogCount(
-    serviceId
-  );
-
-  const state = service.STATE;
-
-  if (
-    state === "CLOSED" && (serviceFailures >= service.SERVICE_FAILURE_THRESHOLD ||
-    networkFailures >= service.NETWORK_FAILURE_THRESHOLD)
-  ) {
-    await flipCircuitState(serviceId, service, "OPEN");
-  } else if (state === "OPEN") {
-    const now = Date.now();
-    const oldDate = Number(service.UPDATED_TIME);
-    const differenceInSecs = (now - oldDate) / 1000;
-
-    if (differenceInSecs >= service.ERROR_TIMEOUT) {
-      await flipCircuitState(serviceId, service, "HALF-OPEN");
-      state = "HALF-OPEN";
-    }
-  } else if (state === "HALF-OPEN") {
-    if (successes >= 1) {
-      await flipCircuitState(serviceId, service, "CLOSED");
-    } else if (
-      networkFailures >= service.NETWORK_FAILURE_THRESHOLD ||
-      serviceFailures >= service.SERVICE_FAILURE_THRESHOLD
-    ) {
-      await flipCircuitState(serviceId, service, "OPEN");
-    }
+  switch (service.STATE) {
+    case "CLOSED":
+      await setStateWhenClosed(service, serviceId);
+      break;
+    case "HALF-OPEN":
+      await setStateWhenHalfOpen(service, serviceId);
+      break;
   }
 }
 
@@ -126,8 +151,7 @@ async function requestLogCount(serviceId) {
   const networkFailures = log.filter((obj) =>
     obj.name.includes("@NETWORK_FAILURE_")
   ).length;
-  const successes = log.filter((obj) => obj.name.includes("@SUCCESS_"))
-    .length;
+  const successes = log.filter((obj) => obj.name.includes("@SUCCESS_")).length;
   return { serviceFailures, networkFailures, successes };
 }
 
