@@ -22,7 +22,7 @@ function getServiceId(url) {
 }
 
 async function getServiceObj(serviceId) {
-  const service = await RESOURCES.get(serviceId);
+  const service = await SERVICES_CONFIG.get(serviceId);
   return JSON.parse(service);
 }
 
@@ -72,10 +72,28 @@ async function updateCircuitState(serviceId, service, response, state) {
   if (state === 'HALF-OPEN' && !response.failure) {
     await updateKV(response.kvKey, serviceId, service);
   }
+
+  const { serviceFailures, networkFailures, successes } = await requestLogCount(
+    request
+  );
 }
 
 async function updateKV(kvKey, serviceId, service) {
-  await FAILURES.put(kvKey + serviceId, Date.now().toString(), {
+  await REQUEST_LOG.put(kvKey + serviceId, Date.now().toString(), {
     expirationTtl: service.TIMESPAN,
   });
+}
+
+async function requestLogCount(request) {
+  const list = await REQUEST_LOG.list();
+  const log = list.keys.filter((obj) => obj.name.includes(request.url));
+  const serviceFailures = log.filter((obj) =>
+    obj.name.includes("@SERVICE_FAILURE_")
+  ).length;
+  const networkFailures = log.filter((obj) =>
+    obj.name.includes("@NETWORK_FAILURE_")
+  ).length;
+  const successes = log.filter((obj) => obj.name.includes("@SUCCESS_"))
+    .length;
+  return { serviceFailures, networkFailures, successes };
 }
