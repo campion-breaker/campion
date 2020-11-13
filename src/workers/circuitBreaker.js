@@ -14,6 +14,7 @@ async function handleRequest(request) {
   }
 
   const response = await processRequest(request, service);
+  updateCircuitState(serviceId, service, response, state);
 }
 
 function getServiceId(url) {
@@ -56,7 +57,7 @@ async function processRequest(request, service) {
 
     if (Number(status) >= 500) {
       failure = true;
-      kvKey = "@SERVICE_FAILURE_" + rand();
+      kvKey = "@SERVICE_FAILURE_" + UUID();
     }
 
     return { body, headers, failure, kvKey, status };
@@ -64,5 +65,17 @@ async function processRequest(request, service) {
 
   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
     return value;
+  });
+}
+
+async function updateCircuitState(serviceId, service, response, state) {
+  if (state === 'HALF-OPEN' && !response.failure) {
+    await updateKV(response.kvKey, serviceId, service);
+  }
+}
+
+async function updateKV(kvKey, serviceId, service) {
+  await FAILURES.put(kvKey + serviceId, Date.now().toString(), {
+    expirationTtl: service.TIMESPAN,
   });
 }
