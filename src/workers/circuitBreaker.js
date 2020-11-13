@@ -36,7 +36,7 @@ function canRequestProceed(service) {
   return randNum === 1;
 }
 
-async function processRequest(request, serviceObj) {
+async function processRequest(request, service) {
   let timeoutId;
 
   const timeoutPromise = new Promise((resolutionFunc, rejectionFunc) => {
@@ -45,7 +45,7 @@ async function processRequest(request, serviceObj) {
     }, serviceObj.MAX_LATENCY);
   });
 
-  const fetchPromise = fetch(serviceObj.SERVICE).then(async (data) => {
+  const fetchPromise = fetch(service.SERVICE).then(async (data) => {
     clearTimeout(timeoutId);
 
     let failure = false;
@@ -60,5 +60,9 @@ async function processRequest(request, serviceObj) {
     }
 
     return { body, headers, failure, kvKey, status };
+  });
+
+  return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
+    return value;
   });
 }
