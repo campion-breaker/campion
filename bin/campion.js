@@ -9,7 +9,7 @@ switch (argv._[0]) {
     break;
   case "new":
   case "add":
-    require("../src/commands/new")();
+    require("../src/commands/add")();
     break;
   default:
     console.log("help");
