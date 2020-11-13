@@ -1,3 +1,4 @@
+const deploy = require('../workers/api');
 const fs = require("fs");
 const prompt = require("prompts");
 const absolutePath = require('../utils/configDir');
@@ -58,6 +59,7 @@ const setup = async () => {
     writeToFile(await promptUser());
   }
 
+  await deploy();
   configGoodbye();
 };
 

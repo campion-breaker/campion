@@ -33,26 +33,6 @@ async function getNamespaceIds(accountId) {
   return body.result;
 }
 
-async function putWorker() {
-  const accountId = await getAccountId();
-  const data = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/campion`,
-    {
-      method: "PUT",
-      headers: {
-        "X-Auth-Email": process.env.EMAIL,
-        "X-Auth-Key": process.env.APIKEY,
-        "Content-Type": "application/javascript",
-      },
-      body:
-        "addEventListener('fetch', hello => { hello.respondWith(fetch(hello.request)) })",
-    }
-  );
-
-  const body = await data.json();
-  console.log(body);
-}
-
 async function createNamespace() {
   const accountId = await getAccountId();
   const data = await fetch(
@@ -126,4 +106,9 @@ async function createWorkerWithKVBinding() {
 
   const body = await data.json();
   console.log(body);
+}
+
+module.exports = async function deploy() {
+  await createNamespace();
+  await createWorkerWithKVBinding();
 }
