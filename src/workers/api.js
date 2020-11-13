@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const FormData = require("form-data");
-const configDir = require("/src/utils/configDir");
+const configDir = require("../utils/configDir");
+const fs = require("fs");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 async function getAccountId() {
@@ -55,7 +56,7 @@ async function writeToNamespace() {
   console.log(body);
 }
 
-async function createNamespace() {
+async function createNamespace(title) {
   const accountId = await getAccountId();
   const data = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
@@ -66,7 +67,7 @@ async function createNamespace() {
         "X-Auth-Key": process.env.APIKEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ title: "Testing123" }),
+      body: JSON.stringify({ title }),
     }
   );
   const body = await data.json();
@@ -75,15 +76,23 @@ async function createNamespace() {
 async function createWorkerWithKVBinding() {
   const accountId = await getAccountId();
   const newWorkerId = "campion";
-  const scriptData =
-    "addEventListener('fetch', hello => { hello.respondWith(fetch(hello.request)) })";
+  const scriptData = fs.readFileSync("circuitBreaker.js", "utf8");
+  const namespaceIds = await getNamespaceIds(accountId);
   const metadata = {
     body_part: "script",
     bindings: [
       {
         type: "kv_namespace",
-        name: "hello",
-        namespace_id: "25e577f693eb4c6291e25bd26bec0865",
+        name: "REQUEST_LOG",
+        namespace_id: namespaceIds.find((obj) => obj.title === "REQUEST_LOG")
+          .id,
+      },
+      {
+        type: "kv_namespace",
+        name: "SERVICES_CONFIG",
+        namespace_id: namespaceIds.find(
+          (obj) => obj.title === "SERVICES_CONFIG"
+        ).id,
       },
     ],
   };
@@ -105,10 +114,12 @@ async function createWorkerWithKVBinding() {
   );
 
   const body = await data.json();
-  console.log(body);
 }
 
-module.exports = async function deploy() {
-  await createNamespace();
+async function deploy() {
+  await createNamespace("REQUEST_LOG");
+  await createNamespace("SERVICES_CONFIG");
   await createWorkerWithKVBinding();
 }
+
+deploy();
