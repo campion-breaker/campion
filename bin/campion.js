@@ -7,8 +7,9 @@ switch (argv._[0]) {
   case "setup":
     require("../src/commands/setup")();
     break;
-  case "build":
-    require("../src/commands/build")();
+  case "new":
+  case "add":
+    require("../src/commands/new")();
     break;
   default:
     console.log("help");
