@@ -5,16 +5,14 @@ async function handleRequest(request) {
   const service = getServiceObj(serviceId);
   if (service === null) return new Response("Circuit breaker doesn't exist", {status: 404});
 
-  const state = circuitState(service);
-
-  if (state === "OPEN") {
+  if (service.STATE === "OPEN") {
     return new Response('Circuit is open', {status: 504});
-  } else if (state === "HALF-OPEN" && !canRequestProceed(serviceObj)) {
+  } else if (service.STATE === "HALF-OPEN" && !canRequestProceed(service)) {
     return new Response('Circuit is closed', {status: 504});
   }
 
   const response = await processRequest(request, service);
-  updateCircuitState(serviceId, service, response, state);
+  updateCircuitState(serviceId, service, response);
 }
 
 function getServiceId(url) {
@@ -24,10 +22,6 @@ function getServiceId(url) {
 async function getServiceObj(serviceId) {
   const service = await SERVICES_CONFIG.get(serviceId);
   return JSON.parse(service);
-}
-
-function circuitState(service) {
-  return service.STATE;
 }
 
 function canRequestProceed(service) {
@@ -68,14 +62,23 @@ async function processRequest(request, service) {
   });
 }
 
-async function updateCircuitState(serviceId, service, response, state) {
-  if (state === 'HALF-OPEN' && !response.failure) {
+async function updateCircuitState(serviceId, service, response) {
+  if (response.failure || (service.STATE === 'HALF-OPEN' && !response.failure)) {
     await updateKV(response.kvKey, serviceId, service);
   }
 
+  await setState();
+}
+
+async function setState() {
   const { serviceFailures, networkFailures, successes } = await requestLogCount(
     request
   );
+
+  let failureKind;
+
+  const state = service.STATE;
+  const response = { state };
 }
 
 async function updateKV(kvKey, serviceId, service) {
