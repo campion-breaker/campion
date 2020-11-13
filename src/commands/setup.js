@@ -1,7 +1,7 @@
-//const deploy = require('../workers/api');
+const deploy = require("../workers/api");
 const fs = require("fs");
 const prompt = require("prompts");
-const absolutePath = require('../utils/configDir');
+const absolutePath = require("../utils/configDir");
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -13,12 +13,23 @@ const configMsg = () => {
   console.log("Campion Config:\n");
 };
 
+const startRibbon = () => {
+  process.stdout.write("\nDeploying");
+  return setInterval(() => {
+    process.stdout.write(".");
+  }, 300);
+};
+
 const configGoodbye = () => {
-  console.log("Setup complete.");
+  console.log(
+    "\nSetup complete. Run 'campion add' to add a new service endpoint."
+  );
 };
 
 const retrieveExistingValues = () => {
-  const existingENV = fs.readFileSync(`${absolutePath}/.env`, "utf8").split("\n");
+  const existingENV = fs
+    .readFileSync(`${absolutePath}/.env`, "utf8")
+    .split("\n");
 
   const apiKey = existingENV[0].slice(7);
   const email = existingENV[1].slice(6);
@@ -59,8 +70,15 @@ const setup = async () => {
     writeToFile(await promptUser());
   }
 
- // await deploy();
-  configGoodbye();
+  const ribbonId = startRibbon();
+  try {
+    await deploy();
+    clearInterval(ribbonId);
+    configGoodbye();
+  } catch (e) {
+    clearInterval(ribbonId);
+    console.log(e.message);
+  }
 };
 
 module.exports = setup;
