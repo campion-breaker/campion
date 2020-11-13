@@ -12,7 +12,8 @@ async function handleRequest(request) {
   }
 
   const response = await processRequest(request, service);
-  updateCircuitState(serviceId, service, response);
+  await updateCircuitState(serviceId, service, response);
+  return new Response(response.body, {status: response.status, headers: response.headers});
 }
 
 function getServiceId(url) {
@@ -64,7 +65,7 @@ async function processRequest(request, service) {
 
 async function updateCircuitState(serviceId, service, response) {
   if (response.failure || (service.STATE === 'HALF-OPEN' && !response.failure)) {
-    await updateKV(response.kvKey, serviceId, service);
+    await updateRequestLog(response.kvKey, serviceId, service);
   }
 
   await setState();
@@ -109,7 +110,7 @@ async function flipCircuitState(serviceId, service, newState) {
   await SERVICES_CONFIG.put(serviceId, JSON.stringify(service));
 }
 
-async function updateKV(kvKey, serviceId, service) {
+async function updateRequestLog(kvKey, serviceId, service) {
   await REQUEST_LOG.put(kvKey + serviceId, Date.now().toString(), {
     expirationTtl: service.TIMESPAN,
   });
@@ -128,3 +129,7 @@ async function requestLogCount(request) {
     .length;
   return { serviceFailures, networkFailures, successes };
 }
+
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
