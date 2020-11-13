@@ -79,6 +79,44 @@ async function setState() {
 
   const state = service.STATE;
   const response = { state };
+
+  if (
+    state === "CLOSED" && (serviceFailures >= service.SERVICE_FAILURE_THRESHOLD ||
+    networkFailures >= service.NETWORK_FAILURE_THRESHOLD)
+  ) {
+    failureKind =
+      serviceFailures >= service.SERVICE_FAILURE_THRESHOLD
+        ? "Service failure"
+        : "Network failure";
+        flipCircuitState(serviceId, service, "OPEN");
+  } else if (state === "OPEN") {
+    const now = Date.now();
+    const oldDate = Number(service.UPDATED_TIME);
+    const differenceInSecs = (now - oldDate) / 1000;
+
+    if (differenceInSecs >= service.ERROR_TIMEOUT) {
+      flipCircuitState(serviceId, service, "HALF-OPEN");
+      response.state = "HALF-OPEN";
+    }
+
+    response.failureKind = failureKind;
+  } else if (state === "HALF-OPEN") {
+    if (successes >= 1) {
+      flipCircuitState(serviceId, service, "CLOSED");
+    } else if (
+      networkFailures >= service.NETWORK_FAILURE_THRESHOLD ||
+      serviceFailures >= service.SERVICE_FAILURE_THRESHOLD
+    ) {
+      flipCircuitState(serviceId, service, "OPEN");
+    }
+  }
+  return response;
+}
+
+async function flipCircuitState(serviceId, service, newState) {
+  service.STATE = newState;
+  service.UPDATED_TIME = Date.now().toString();
+  await SERVICES_CONFIG.put(serviceId, JSON.stringify(service));
 }
 
 async function updateKV(kvKey, serviceId, service) {
