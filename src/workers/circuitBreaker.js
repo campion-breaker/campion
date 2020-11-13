@@ -44,4 +44,21 @@ async function processRequest(request, serviceObj) {
       resolutionFunc({ failure: true, kvKey: "@NETWORK_FAILURE_" + UUID(), status: 522 });
     }, serviceObj.MAX_LATENCY);
   });
+
+  const fetchPromise = fetch(serviceObj.SERVICE).then(async (data) => {
+    clearTimeout(timeoutId);
+
+    let failure = false;
+    let kvKey = "@SUCCESS_" + UUID();
+    const body = await data.body;
+    const headers = await data.headers;
+    const status = await data.status;
+
+    if (Number(status) >= 500) {
+      failure = true;
+      kvKey = "@SERVICE_FAILURE_" + rand();
+    }
+
+    return { body, headers, failure, kvKey, status };
+  });
 }
