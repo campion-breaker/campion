@@ -8,7 +8,7 @@ async function handleRequest(request) {
   if (service.STATE === "OPEN") {
     return new Response('Circuit is open', {status: 504});
   } else if (service.STATE === "HALF-OPEN" && !canRequestProceed(service)) {
-    return new Response('Circuit is closed', {status: 504});
+    return new Response('Circuit is half-open', {status: 504});
   }
 
   const response = await processRequest(request, service, serviceId);
