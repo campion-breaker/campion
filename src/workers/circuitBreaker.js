@@ -14,7 +14,10 @@ async function handleRequest(request) {
     if (service.CIRCUIT_STATE === "OPEN") {
       return new Response("Circuit is open", { status: 504 });
     }
-  } else if (service.CIRCUIT_STATE === "HALF-OPEN" && !canRequestProceed(service)) {
+  } else if (
+    service.CIRCUIT_STATE === "HALF-OPEN" &&
+    !canRequestProceed(service)
+  ) {
     return new Response("Circuit is half-open", { status: 504 });
   }
 
@@ -100,7 +103,9 @@ async function setStateWhenOpen(service, serviceId) {
 }
 
 async function setStateWhenHalfOpen(service, serviceId) {
-  const { successes } = await requestLogCount(serviceId);
+  const { successes, serviceFailures, networkFailures } = await requestLogCount(
+    serviceId
+  );
 
   if (successes >= 1) {
     await flipCircuitState(serviceId, service, "CLOSED");
