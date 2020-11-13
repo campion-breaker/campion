@@ -33,23 +33,6 @@ async function getNamespaceIds(accountId) {
   return body.result;
 }
 
-async function createNamespace() {
-  const accountId = await getAccountId();
-  const data = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
-    {
-      method: "POST",
-      headers: {
-        "X-Auth-Email": process.env.EMAIL,
-        "X-Auth-Key": process.env.APIKEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title: "Testing123" }),
-    }
-  );
-  const body = await data.json();
-}
-
 async function writeToNamespace() {
   const accountId = await getAccountId();
   const namespaces = await getNamespaceIds(accountId);
@@ -70,6 +53,23 @@ async function writeToNamespace() {
   );
   const body = await data.json();
   console.log(body);
+}
+
+async function createNamespace() {
+  const accountId = await getAccountId();
+  const data = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
+    {
+      method: "POST",
+      headers: {
+        "X-Auth-Email": process.env.EMAIL,
+        "X-Auth-Key": process.env.APIKEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title: "Testing123" }),
+    }
+  );
+  const body = await data.json();
 }
 
 async function createWorkerWithKVBinding() {

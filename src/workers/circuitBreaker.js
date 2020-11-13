@@ -1,4 +1,13 @@
-const { v4: UUID } = require("uuid");
+function UUID() {
+  const alphanum = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = '';
+
+  for (let i = 0; i < 16; i++) {
+    result += alphanum[Math.floor(Math.random() * 36)];  
+  }
+
+  return result;
+}
 
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
