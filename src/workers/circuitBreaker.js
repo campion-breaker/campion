@@ -8,13 +8,13 @@ async function handleRequest(request) {
     return new Response("Circuit breaker doesn't exist", { status: 404 });
   }
 
-  if (service.STATE === "OPEN") {
+  if (service.CIRCUIT_STATE === "OPEN") {
     await setStateWhenOpen(service, serviceId);
 
-    if (service.STATE === "OPEN") {
+    if (service.CIRCUIT_STATE === "OPEN") {
       return new Response("Circuit is open", { status: 504 });
     }
-  } else if (service.STATE === "HALF-OPEN" && !canRequestProceed(service)) {
+  } else if (service.CIRCUIT_STATE === "HALF-OPEN" && !canRequestProceed(service)) {
     return new Response("Circuit is half-open", { status: 504 });
   }
 
@@ -115,12 +115,12 @@ async function setStateWhenHalfOpen(service, serviceId) {
 async function updateCircuitState(service, serviceId, response) {
   if (
     response.failure ||
-    (service.STATE === "HALF-OPEN" && !response.failure)
+    (service.CIRCUIT_STATE === "HALF-OPEN" && !response.failure)
   ) {
     await updateRequestLog(response.kvKey, serviceId, service);
   }
 
-  switch (service.STATE) {
+  switch (service.CIRCUIT_STATE) {
     case "CLOSED":
       await setStateWhenClosed(service, serviceId);
       break;
@@ -131,7 +131,7 @@ async function updateCircuitState(service, serviceId, response) {
 }
 
 async function flipCircuitState(serviceId, service, newState) {
-  service.STATE = newState;
+  service.CIRCUIT_STATE = newState;
   service.UPDATED_TIME = Date.now().toString();
   await SERVICES_CONFIG.put(serviceId, JSON.stringify(service));
 }
