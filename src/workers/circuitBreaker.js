@@ -2,7 +2,7 @@ const { v4: UUID } = require('uuid');
 
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
-  const service = getServiceObj(serviceId);
+  const service = await getServiceObj(serviceId);
   if (service === null) return new Response("Circuit breaker doesn't exist", {status: 404});
 
   if (service.STATE === "OPEN") {
@@ -11,16 +11,17 @@ async function handleRequest(request) {
     return new Response('Circuit is closed', {status: 504});
   }
 
-  const response = await processRequest(request, service);
-  await updateCircuitState(serviceId, service, response);
+  const response = await processRequest(request, service, serviceId);
+  await updateCircuitState(service, serviceId, response);
   return new Response(response.body, {status: response.status, headers: response.headers});
 }
 
 function getServiceId(url) {
-  return new URL(request.url).pathname.replace('/', '');
+  return new URL(url).pathname.replace('/', '');
 }
 
 async function getServiceObj(serviceId) {
+  if (serviceId === '') return null;
   const service = await SERVICES_CONFIG.get(serviceId);
   return JSON.parse(service);
 }
@@ -38,7 +39,7 @@ async function processRequest(request, service) {
   const timeoutPromise = new Promise((resolutionFunc, rejectionFunc) => {
     timeoutId = setTimeout(() => {
       resolutionFunc({ failure: true, kvKey: "@NETWORK_FAILURE_" + UUID(), status: 522 });
-    }, serviceObj.MAX_LATENCY);
+    }, service.MAX_LATENCY);
   });
 
   const fetchPromise = fetch(service.SERVICE).then(async (data) => {
@@ -63,17 +64,17 @@ async function processRequest(request, service) {
   });
 }
 
-async function updateCircuitState(serviceId, service, response) {
+async function updateCircuitState(service, serviceId, response) {
   if (response.failure || (service.STATE === 'HALF-OPEN' && !response.failure)) {
     await updateRequestLog(response.kvKey, serviceId, service);
   }
 
-  await setState();
+  await setState(service, serviceId);
 }
 
-async function setState() {
+async function setState(service, serviceId) {
   const { serviceFailures, networkFailures, successes } = await requestLogCount(
-    request
+    serviceId
   );
 
   const state = service.STATE;
@@ -116,9 +117,9 @@ async function updateRequestLog(kvKey, serviceId, service) {
   });
 }
 
-async function requestLogCount(request) {
+async function requestLogCount(serviceId) {
   const list = await REQUEST_LOG.list();
-  const log = list.keys.filter((obj) => obj.name.includes(request.url));
+  const log = list.keys.filter((obj) => obj.name.includes(serviceId));
   const serviceFailures = log.filter((obj) =>
     obj.name.includes("@SERVICE_FAILURE_")
   ).length;
