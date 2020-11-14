@@ -134,7 +134,7 @@ async function createWorkerWithKVBinding() {
   form.append("metadata", JSON.stringify(metadata));
   form.append("script", scriptData);
 
-  const data = await fetch(
+  const uploadWorker = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${newWorkerId}/`,
     {
       method: "PUT",
@@ -146,9 +146,28 @@ async function createWorkerWithKVBinding() {
     }
   );
 
-  if (!data.ok) {
+  if (!uploadWorker.ok) {
     throw new Error(
       `\nFailed to deploy Campion to Cloudflare. Please try again.`
+    );
+  }
+
+  const deployToWorkersDev = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/scripts/${newWorkerId}/subdomain`,
+    {
+      method: "POST",
+      headers: {
+        "X-Auth-Email": process.env.EMAIL,
+        "X-Auth-Key": process.env.APIKEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ enabled: true }),
+    }
+  );
+
+  if (!deployToWorkersDev.ok) {
+    throw new Error(
+      `\nFailed to publish Campion to Cloudflare. Please try again.`
     );
   }
 }
