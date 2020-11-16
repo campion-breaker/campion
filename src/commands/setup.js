@@ -1,4 +1,8 @@
-const deploy = require("../workers/api");
+const {
+  getAccountId,
+  createNamespace,
+  createWorkerWithKVBinding,
+} = require("../workers/api");
 const fs = require("fs");
 const prompt = require("prompts");
 const absolutePath = require("../utils/configDir");
@@ -20,21 +24,12 @@ const configGoodbye = () => {
   );
 };
 
-const retrieveExistingValues = () => {
-  const existingENV = fs
-    .readFileSync(`${absolutePath}/.env`, "utf8")
-    .split("\n");
-
-  const apiKey = existingENV[0].slice(7);
-  const email = existingENV[1].slice(6);
-
-  return [apiKey, email];
-};
-
 const promptUser = async (apiKey, email) =>
   await prompt(questions(apiKey, email));
 
 const writeToFile = ({ apiKey, email }) => {
+  process.env.APIKEY = apiKey;
+  process.env.EMAIL = email;
   fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
 };
 
@@ -58,7 +53,9 @@ const setup = async () => {
   configMsg();
 
   try {
-    const [apiKey, email] = retrieveExistingValues();
+    const apiKey = process.env.APIKEY;
+    const email = process.env.EMAIL;
+
     writeToFile(await promptUser(apiKey, email));
   } catch (e) {
     writeToFile(await promptUser());
@@ -66,7 +63,13 @@ const setup = async () => {
 
   const setupId = loadingBar("Deploying");
   try {
-    await deploy();
+    try {
+      await getAccountId();
+      await createNamespace();
+      await createWorkerWithKVBinding();
+    } catch (e) {
+      throw new Error(e.message);
+    }
     clearInterval(setupId);
     configGoodbye();
   } catch (e) {
