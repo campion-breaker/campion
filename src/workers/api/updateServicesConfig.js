@@ -47,7 +47,7 @@ async function updateServiceConfig(state) {
   )[0].id;
 
   const data = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/broken-rice`,
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/${serviceId}`,
     {
       method: "PUT",
       headers: {
