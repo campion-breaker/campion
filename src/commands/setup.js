@@ -52,12 +52,11 @@ const setup = async () => {
   createHiddenCampionDir();
   configMsg();
 
-  try {
-    const apiKey = process.env.APIKEY;
-    const email = process.env.EMAIL;
-
+  const apiKey = process.env.APIKEY;
+  const email = process.env.EMAIL;
+  if (apiKey && email) {
     writeToFile(await promptUser(apiKey, email));
-  } catch (e) {
+  } else {
     writeToFile(await promptUser());
   }
 

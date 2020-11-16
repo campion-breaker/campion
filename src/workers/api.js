@@ -11,22 +11,18 @@ const writeAccountIdToFile = (acctId) => {
 };
 
 async function getAccountId() {
-  let acctId = process.env.ACCOUNT_ID;
+  const data = await fetch("https://api.cloudflare.com/client/v4/accounts", {
+    headers: {
+      "X-Auth-Email": process.env.EMAIL,
+      "X-Auth-Key": process.env.APIKEY,
+      "Content-Type": "application/json",
+    },
+  });
 
-  if (!acctId) {
-    const data = await fetch("https://api.cloudflare.com/client/v4/accounts", {
-      headers: {
-        "X-Auth-Email": process.env.EMAIL,
-        "X-Auth-Key": process.env.APIKEY,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!data.ok) throw new Error("\nInvalid Credentials.");
-    const body = await data.json();
-    acctId = body.result[0].id;
-    writeAccountIdToFile(acctId);
-  }
+  if (!data.ok) throw new Error("\nInvalid Credentials.");
+  const body = await data.json();
+  const acctId = body.result[0].id;
+  writeAccountIdToFile(acctId);
 }
 
 const writeNamespaceIdToFile = (name, id) => {
@@ -35,37 +31,34 @@ const writeNamespaceIdToFile = (name, id) => {
 };
 
 async function getNamespaceIds(accountId) {
-  let requestLogId = process.env.REQUEST_LOG_ID;
-  let servicesConfigId = process.env.SERVICES_CONFIG_ID;
-
-  if (!requestLogId || !servicesConfigId) {
-    const data = await fetch(
-      `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
-      {
-        method: "GET",
-        headers: {
-          "X-Auth-Email": process.env.EMAIL,
-          "X-Auth-Key": process.env.APIKEY,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!data.ok) {
-      throw new Error(`\nUnable to retrieve KV Namespaces.`);
+  let requestLogId;
+  let servicesConfigId;
+  const data = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
+    {
+      method: "GET",
+      headers: {
+        "X-Auth-Email": process.env.EMAIL,
+        "X-Auth-Key": process.env.APIKEY,
+        "Content-Type": "application/json",
+      },
     }
+  );
 
+  if (data.ok) {
     const body = await data.json();
-    console.log(body)
-
     if (body.result.length > 0) {
       requestLogId = body.result.find((obj) => obj.title === "REQUEST_LOG").id;
       servicesConfigId = body.result.find(
         (obj) => obj.title === "SERVICES_CONFIG"
       ).id;
-      writeNamespaceIdToFile("REQUEST_LOG_ID", requestLogId);
-      writeNamespaceIdToFile("SERVICES_CONFIG_ID", servicesConfigId);
     }
+
+    writeNamespaceIdToFile("REQUEST_LOG_ID", requestLogId);
+    writeNamespaceIdToFile("SERVICES_CONFIG_ID", servicesConfigId);
+
+  } else {
+    throw new Error(`\nUnable to retrieve KV Namespaces.`);
   }
 }
 
