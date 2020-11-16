@@ -31,7 +31,7 @@ async function getAccountId() {
 
 const writeNamespaceIdToFile = (name, id) => {
   process.env[name] = id;
-  fs.appendFileSync(`${absolutePath}/.env`, `\n${name}=${acctId}`);
+  fs.appendFileSync(`${absolutePath}/.env`, `\n${name}=${id}`);
 };
 
 async function getNamespaceIds(accountId) {
@@ -56,14 +56,15 @@ async function getNamespaceIds(accountId) {
     }
 
     const body = await data.json();
+    console.log(body)
 
-    if (body.result) {
+    if (body.result.length > 0) {
       requestLogId = body.result.find((obj) => obj.title === "REQUEST_LOG").id;
       servicesConfigId = body.result.find(
         (obj) => obj.title === "SERVICES_CONFIG"
       ).id;
-      writeNamespaceIdToFile("REQUEST_LOG", requestLogId);
-      writeNamespaceIdToFile("SERVICES_CONFIG", servicesConfigId);
+      writeNamespaceIdToFile("REQUEST_LOG_ID", requestLogId);
+      writeNamespaceIdToFile("SERVICES_CONFIG_ID", servicesConfigId);
     }
   }
 }
@@ -82,7 +83,7 @@ async function createNamespace() {
           "X-Auth-Key": process.env.APIKEY,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title }),
+        body: { "title": "REQUEST_LOG" },
       }
     );
 
@@ -91,7 +92,7 @@ async function createNamespace() {
       console.log(data)
     } else {
       throw new Error(
-        `\nFailed to build KV Namespace '${title}'. Please try again.`
+        `\nFailed to build KV Namespace. Please try again.`
       );
     }
   }
@@ -101,22 +102,18 @@ async function createWorkerWithKVBinding() {
   const accountId = process.env.ACCOUNT_ID;
   const newWorkerId = "campion";
   const scriptData = fs.readFileSync(`${__dirname}/circuitBreaker.js`, "utf8");
-  const namespaceIds = await getNamespaceIds(accountId);
   const metadata = {
     body_part: "script",
     bindings: [
       {
         type: "kv_namespace",
         name: "REQUEST_LOG",
-        namespace_id: namespaceIds.find((obj) => obj.title === "REQUEST_LOG")
-          .id,
+        namespace_id: process.env.REQUEST_LOG_ID,
       },
       {
         type: "kv_namespace",
         name: "SERVICES_CONFIG",
-        namespace_id: namespaceIds.find(
-          (obj) => obj.title === "SERVICES_CONFIG"
-        ).id,
+        namespace_id: process.env.SERVICES_CONFIG_ID,
       },
     ],
   };
