@@ -4,17 +4,6 @@ const configDir = require("../utils/configDir");
 const fs = require("fs");
 require("dotenv").config({ path: `${configDir}/.env` });
 
-const initialState = {
-  CIRCUIT_STATE: "CLOSED",
-  ERROR_TIMEOUT: 60,
-  MAX_LATENCY: 1000,
-  NETWORK_FAILURE_THRESHOLD: 5,
-  PERCENT_OF_REQUESTS: 25,
-  SERVICE: "https://broken-rice-127c.bziggz.workers.dev/",
-  SERVICE_FAILURE_THRESHOLD: 3,
-  SUCCESS_THRESHOLD: 2,
-  TIMESPAN: 60,
-};
 
 async function getAccountId() {
   const data = await fetch("https://api.cloudflare.com/client/v4/accounts", {
