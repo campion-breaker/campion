@@ -46,6 +46,8 @@ async function updateServiceConfig(state) {
     (kv) => kv.title === "SERVICES_CONFIG"
   )[0].id;
 
+  const serviceId = state.SERVICE_NAME;
+
   const data = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${namespaceId}/values/${serviceId}`,
     {

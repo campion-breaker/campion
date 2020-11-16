@@ -40,6 +40,7 @@ const retrieveExistingValues = () => {
 const promptUser = async (apiKey, email) =>
   await prompt(questions(apiKey, email));
 
+  
 const writeToFile = ({ apiKey, email }) => {
   fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
 };
