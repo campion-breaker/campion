@@ -1,5 +1,10 @@
 const update = require("../workers/api/updateServicesConfig");
 const prompt = require("prompts");
+const loadingBar = require("../utils/loadingBar");
+
+const addSuccessMsg = (service, url) => {
+  console.log(`\nService '${service}' now protected at ${url}.`);
+};
 
 const initialState = {
   CIRCUIT_STATE: "CLOSED",
@@ -68,7 +73,8 @@ const questions = (state) => [
   {
     type: "number",
     name: "TIMESPAN",
-    message: "How far back (sec) should Campion look for failures?",
+    message:
+      "How far back (sec) should Campion look for failures (aka TIMESPAN)?",
     initial: state.TIMESPAN || 60,
   },
   {
@@ -107,7 +113,17 @@ const getServiceConfig = async (state) => {
 };
 
 const add = async () => {
-  await update(await getServiceConfig(initialState));
+  const newState = await getServiceConfig(initialState);
+
+  const addId = loadingBar("Protecting Service ");
+  try {
+    await update(newState);
+    clearInterval(addId);
+    addSuccessMsg(newState.SERVICE_NAME, newState.SERVICE);
+  } catch (e) {
+    clearInterval(addId);
+    console.log(e.message);
+  }
 };
 
 module.exports = add;

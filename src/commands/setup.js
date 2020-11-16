@@ -2,6 +2,7 @@ const deploy = require("../workers/api");
 const fs = require("fs");
 const prompt = require("prompts");
 const absolutePath = require("../utils/configDir");
+const loadingBar = require("../utils/loadingBar");
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -11,13 +12,6 @@ const createHiddenCampionDir = () => {
 
 const configMsg = () => {
   console.log("Campion Config:\n");
-};
-
-const startRibbon = () => {
-  process.stdout.write("\nDeploying");
-  return setInterval(() => {
-    process.stdout.write(".");
-  }, 300);
 };
 
 const configGoodbye = () => {
@@ -40,7 +34,6 @@ const retrieveExistingValues = () => {
 const promptUser = async (apiKey, email) =>
   await prompt(questions(apiKey, email));
 
-  
 const writeToFile = ({ apiKey, email }) => {
   fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
 };
@@ -71,13 +64,13 @@ const setup = async () => {
     writeToFile(await promptUser());
   }
 
-  const ribbonId = startRibbon();
+  const setupId = loadingBar("Deploying");
   try {
     await deploy();
-    clearInterval(ribbonId);
+    clearInterval(setupId);
     configGoodbye();
   } catch (e) {
-    clearInterval(ribbonId);
+    clearInterval(setupId);
     console.log(e.message);
   }
 };
