@@ -5,7 +5,9 @@ const fetch = require("node-fetch");
 const getServiceConfig = require("../workers/api/getServiceConfig");
 
 const addSuccessMsg = (service, url) => {
-  console.log(`\nService '${service}' now protected at ${process.env.SUBDOMAIN}${url}.`);
+  console.log(
+    `\nService '${service}' now protected at ${process.env.SUBDOMAIN}service?id=${url}.`
+  );
 };
 
 const initialState = {
@@ -112,7 +114,7 @@ const questions = (state) => [
 
 const validateUrl = async (url) => {
   try {
-    if (!await getServiceConfig(url)) {
+    if (!(await getServiceConfig(url))) {
       const data = await fetch(url);
       return data.status >= 200 && data.status <= 299;
     } else {
@@ -132,7 +134,7 @@ const add = async () => {
   const newState = await setInitialSericeConfig(initialState);
 
   if (!(Object.keys(newState).length === 10)) {
-    console.log('\nNew service entry aborted.');
+    console.log("\nNew service entry aborted.");
     return;
   }
 
