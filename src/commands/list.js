@@ -11,7 +11,7 @@ const list = async () => {
   }
 
   const table = new Table({
-    head: ['Name', 'Circuit State', 'Campion Endpoint'],
+    head: ['Name', 'Circuitbreaker', 'Campion Endpoint'],
   });
 
   const services = await getAllServicesConfigs();
