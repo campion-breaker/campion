@@ -1,15 +1,17 @@
 const update = require("../workers/api/updateServicesConfig");
 const prompt = require("prompts");
 const loadingBar = require("../utils/loadingBar");
+const fetch = require("node-fetch");
+const getServiceConfig = require("../workers/api/getServiceConfig");
 
 const addSuccessMsg = (service, url) => {
-  console.log(`\nService '${service}' now protected at ${url}.`);
+  console.log(`\nService '${service}' now protected at ${process.env.SUBDOMAIN}${url}.`);
 };
 
 const initialState = {
   CIRCUIT_STATE: "CLOSED",
   ERROR_TIMEOUT: 60,
-  MAX_LATENCY: 1000,
+  MAX_LATENCY: 3000,
   NETWORK_FAILURE_THRESHOLD: 5,
   PERCENT_OF_REQUESTS: 25,
   SERVICE: "",
@@ -31,6 +33,7 @@ const questions = (state) => [
     name: "SERVICE",
     message: "Enter the service URL: ",
     initial: state.SERVICE || "",
+    validate: async (url) => await validateUrl(url),
   },
   {
     type: "select",
@@ -107,13 +110,31 @@ const questions = (state) => [
   },
 ];
 
-const getServiceConfig = async (state) => {
+const validateUrl = async (url) => {
+  try {
+    if (!await getServiceConfig(url)) {
+      const data = await fetch(url);
+      return data.status >= 200 && data.status <= 299;
+    } else {
+      return "This url is already protected.";
+    }
+  } catch (e) {
+    return "Invalid url endpoint.";
+  }
+};
+
+const setInitialSericeConfig = async (state) => {
   const newState = await prompt(questions(state));
   return newState;
 };
 
 const add = async () => {
-  const newState = await getServiceConfig(initialState);
+  const newState = await setInitialSericeConfig(initialState);
+
+  if (!(Object.keys(newState).length === 10)) {
+    console.log('\nNew service entry aborted.');
+    return;
+  }
 
   const addId = loadingBar("Protecting Service ");
   try {

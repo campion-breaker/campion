@@ -1,8 +1,11 @@
-const deploy = require("../workers/api");
+const getAccountId = require('../workers/api/getAccountId');
+const createNamespace = require('../workers/api/createNamespace');
+const createWorkerWithKVBinding = require('../workers/api/createWorkerWithKVBinding');
 const fs = require("fs");
 const prompt = require("prompts");
 const absolutePath = require("../utils/configDir");
 const loadingBar = require("../utils/loadingBar");
+const getWorkersDevSubdomain = require('../workers/api/getWorkersDevSubdomain');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -20,21 +23,12 @@ const configGoodbye = () => {
   );
 };
 
-const retrieveExistingValues = () => {
-  const existingENV = fs
-    .readFileSync(`${absolutePath}/.env`, "utf8")
-    .split("\n");
-
-  const apiKey = existingENV[0].slice(7);
-  const email = existingENV[1].slice(6);
-
-  return [apiKey, email];
-};
-
 const promptUser = async (apiKey, email) =>
   await prompt(questions(apiKey, email));
 
 const writeToFile = ({ apiKey, email }) => {
+  process.env.APIKEY = apiKey;
+  process.env.EMAIL = email;
   fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
 };
 
@@ -57,16 +51,20 @@ const setup = async () => {
   createHiddenCampionDir();
   configMsg();
 
-  try {
-    const [apiKey, email] = retrieveExistingValues();
+  const apiKey = process.env.APIKEY;
+  const email = process.env.EMAIL;
+  if (apiKey && email) {
     writeToFile(await promptUser(apiKey, email));
-  } catch (e) {
+  } else {
     writeToFile(await promptUser());
   }
 
   const setupId = loadingBar("Deploying");
   try {
-    await deploy();
+    await getAccountId();
+    await createNamespace();
+    await createWorkerWithKVBinding();
+    await getWorkersDevSubdomain();
     clearInterval(setupId);
     configGoodbye();
   } catch (e) {

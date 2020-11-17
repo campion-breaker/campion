@@ -3,7 +3,7 @@ function UUID() {
   let result = '';
 
   for (let i = 0; i < 16; i++) {
-    result += alphanum[Math.floor(Math.random() * 36)];  
+    result += alphanum[Math.floor(Math.random() * 36)];
   }
 
   return result;
@@ -39,7 +39,7 @@ async function handleRequest(request) {
 }
 
 function getServiceId(url) {
-  return new URL(url).pathname.replace("/", "");
+  return url.split('workers.dev/')[1];
 }
 
 async function getServiceObj(serviceId) {
