@@ -20,6 +20,23 @@ const questions = (choices) => {
   };
 };
 
+const selectService = async (services) => {
+  const choices = services.map((service) => {
+    return {
+      title: service.SERVICE_NAME,
+      value: service.SERVICE,
+      description: service.SERVICE,
+    };
+  });
+
+  const chosenService = await prompt(questions(choices));
+  return chosenService;
+};
+
+const serviceConfig = (services, chosenService) => {
+  return services.find((service) => service.SERVICE === chosenService.SERVICE);
+};
+
 const update = async () => {
   if (!configExists()) {
     console.log('Config not found. Run "campion setup" to start.');
@@ -33,19 +50,8 @@ const update = async () => {
     return;
   }
 
-  const choices = services.map((service) => {
-    return {
-      title: service.SERVICE_NAME,
-      value: service.SERVICE,
-      description: service.SERVICE,
-    };
-  });
-
-  const chosenService = await prompt(questions(choices));
-  const chosenServiceConfig = services.find(
-    (service) => service.SERVICE === chosenService.SERVICE
-  );
-
+  const chosenService = await selectService(services);
+  const chosenServiceConfig = serviceConfig(services, chosenServiceConfig);
   const newState = await servicePromptConfig(chosenServiceConfig);
 
   if (!(Object.keys(newState).length === 10)) {
