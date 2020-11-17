@@ -39,7 +39,11 @@ async function handleRequest(request) {
 }
 
 function getServiceId(url) {
-  return url.split('workers.dev/')[1];
+  if (url.slice(-1) === '/') {
+    url = url.slice(0, -1);
+  }
+
+  return url.split('workers.dev/service?id=')[1];
 }
 
 async function getServiceObj(serviceId) {
