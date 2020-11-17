@@ -1,29 +1,43 @@
 #!/usr/bin/env node
 
-const minimist = require("minimist");
-const argv = minimist(process.argv.slice(2), {});
+const { program } = require("commander");
 
-switch (argv._[0].toLowerCase()) {
-  case "setup":
-    require("../src/commands/setup")();
-    break;
-  case "new":
-  case "add":
-    require("../src/commands/add")();
-    break;
-  case "list":
-    require("../src/commands/list")();
-    break;
-  case "update":
-    require("../src/commands/update")();
-    break;
-  case "delete":
-    require("../src/commands/delete")();
-    break;
-  case "flip":
-    require("../src/commands/flip")();
-    break;
-  default:
-    console.log("help");
-    break;
-}
+program.version("0.0.1");
+
+program
+  .command("s")
+  .alias("setup")
+  .description("Configure Campion with Cloudflare Email and Global API Key")
+  .action(() => require("../src/commands/setup")());
+
+program
+  .command("a")
+  .alias("add")
+  .description("Protect a new endpoint")
+  .action(() => require("../src/commands/add")());
+
+program
+  .command("l")
+  .alias("list")
+  .description("List all protected services")
+  .action(() => require("../src/commands/list")());
+
+program
+  .command("u")
+  .alias("update")
+  .description("Update the config parameters for a single endpoint")
+  .action(() => require("../src/commands/update")());
+
+program
+  .command("d")
+  .alias("delete")
+  .description("Delete a service from Campion")
+  .action(() => require("../src/commands/delete")());
+
+program
+  .command("f")
+  .alias("flip")
+  .description("Manually flip the state of a service's circuit breaker")
+  .action(() => require("../src/commands/flip")());
+
+program.parse(process.argv);
