@@ -7,7 +7,7 @@ const servicePromptConfig = require("../utils/servicePromptConfig");
 const updateServicesConfig = require("../workers/api/updateServicesConfig");
 require("dotenv").config({ path: `${configDir}/.env` });
 
-const updateSuccessMsg = (service, url) => {
+const updateSuccessMsg = (service) => {
   console.log(`\nService '${service}' successfully updated.`);
 };
 
@@ -43,10 +43,20 @@ const update = async () => {
     return;
   }
 
-  const services = await getAllServicesConfigs();
+  let services;
+  const retrieveId = loadingBar("Retrieving services ");
+
+  try {
+    services = await getAllServicesConfigs();
+    clearInterval(retrieveId);
+    console.log("\n");
+  } catch (e) {
+    clearInterval(retrieveId);
+    console.log(e.message);
+  }
 
   if (services.length === 0) {
-    console.log('No services found. Run "campion add" to add a service.');
+    console.log('\nNo services found. Run "campion add" to add a service.');
     return;
   }
 
@@ -59,7 +69,8 @@ const update = async () => {
     return;
   }
 
-  const updateId = loadingBar(`\nUpdating ${newState.SERVICE_NAME} `);
+  const updateId = loadingBar(`\nUpdating '${newState.SERVICE_NAME}' `);
+
   try {
     await updateServicesConfig(newState);
     clearInterval(updateId);

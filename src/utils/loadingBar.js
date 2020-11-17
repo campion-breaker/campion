@@ -1,7 +1,7 @@
 const startLoadingBar = (message) => {
   process.stdout.write(`\n${message}`);
   return setInterval(() => {
-    process.stdout.write(" ☀️");
+    process.stdout.write(".");
   }, 300);
 };
 
