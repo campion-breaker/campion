@@ -3,7 +3,6 @@ const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
 const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const loadingBar = require("../utils/loadingBar");
-const servicePromptConfig = require("../utils/servicePromptConfig");
 const updateServicesConfig = require("../workers/api/updateServicesConfig");
 require("dotenv").config({ path: `${configDir}/.env` });
 
