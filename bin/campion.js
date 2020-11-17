@@ -20,6 +20,9 @@ switch (argv._[0].toLowerCase()) {
   case "delete":
     require("../src/commands/delete")();
     break;
+  case "flip":
+    require("../src/commands/flip")();
+    break;
   default:
     console.log("help");
     break;
