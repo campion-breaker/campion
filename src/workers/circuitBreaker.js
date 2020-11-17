@@ -1,14 +1,3 @@
-function UUID() {
-  const alphanum = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = '';
-
-  for (let i = 0; i < 16; i++) {
-    result += alphanum[Math.floor(Math.random() * 36)];
-  }
-
-  return result;
-}
-
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
   const service = await getServiceObj(serviceId);
@@ -30,7 +19,7 @@ async function handleRequest(request) {
     return new Response("Circuit is half-open", { status: 504 });
   }
 
-  const response = await processRequest(request, service, serviceId);
+  const response = await processRequest(service);
   await updateCircuitState(service, serviceId, response);
   return new Response(response.body, {
     status: response.status,
@@ -59,14 +48,14 @@ function canRequestProceed(service) {
   return randNum === 1;
 }
 
-async function processRequest(request, service) {
+async function processRequest(service) {
   let timeoutId;
 
-  const timeoutPromise = new Promise((resolutionFunc, rejectionFunc) => {
+  const timeoutPromise = new Promise(resolutionFunc => {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
-        kvKey: "@NETWORK_FAILURE_" + UUID(),
+        kvKey: "@NETWORK_FAILURE_" + Date.now(),
         status: 522,
       });
     }, service.MAX_LATENCY);
@@ -76,14 +65,14 @@ async function processRequest(request, service) {
     clearTimeout(timeoutId);
 
     let failure = false;
-    let kvKey = "@SUCCESS_" + UUID();
-    const body = await data.body;
-    const headers = await data.headers;
-    const status = await data.status;
+    let kvKey = "@SUCCESS_" + Date.now();
+    const body = data.body;
+    const headers = data.headers;
+    const status = data.status;
 
     if (Number(status) >= 500) {
       failure = true;
-      kvKey = "@SERVICE_FAILURE_" + UUID();
+      kvKey = "@SERVICE_FAILURE_" + Date.now();
     }
 
     return { body, headers, failure, kvKey, status };
