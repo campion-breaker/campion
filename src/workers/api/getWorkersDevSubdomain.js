@@ -1,5 +1,6 @@
 const fetch = require("node-fetch");
 const configDir = require("../../utils/configDir");
+const writeIdToEnv = require("../../utils/writeIdToEnv");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const getWorkersDevSubdomain = async () => {
@@ -21,7 +22,7 @@ const getWorkersDevSubdomain = async () => {
   }
 
   const body = await data.json();
-  return `https://campion.${body.result.subdomain}.workers.dev/`;
+  writeIdToEnv('SUBDOMAIN', `https://campion.${body.result.subdomain}.workers.dev/`);
 };
 
 module.exports = getWorkersDevSubdomain;
