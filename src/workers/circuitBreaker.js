@@ -39,6 +39,10 @@ async function handleRequest(request) {
 }
 
 function getServiceId(url) {
+  if (url.slice(-1) === '/') {
+    url = url.slice(0, -1);
+  }
+
   return url.split('workers.dev/service?id=')[1];
 }
 
