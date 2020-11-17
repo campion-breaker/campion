@@ -1,8 +1,9 @@
-const getAllServicesConfigs = require('../utils/getAllServicesConfigs');
-const configDir = require('../utils/configDir');
-const configExists = require('../utils/validateConfig');
-const Table = require('cli-table3');
-require('dotenv').config({ path: `${configDir}/.env` });
+const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
+const configDir = require("../utils/configDir");
+const configExists = require("../utils/validateConfig");
+const Table = require("cli-table3");
+const loadingBar = require("../utils/loadingBar");
+require("dotenv").config({ path: `${configDir}/.env` });
 
 const list = async () => {
   if (!configExists()) {
@@ -10,11 +11,26 @@ const list = async () => {
     return;
   }
 
-  const table = new Table({
-    head: ['Name', 'Circuit State', 'Campion Endpoint'],
-  });
+  let services;
+  const retrieveId = loadingBar("Retrieving services ");
 
-  const services = await getAllServicesConfigs();
+  try {
+    services = await getAllServicesConfigs();
+    clearInterval(retrieveId);
+    console.log("\n");
+  } catch (e) {
+    clearInterval(retrieveId);
+    console.log(e.message);
+  }
+
+  if (services.length === 0) {
+    console.log("\nNo services found.");
+    return;
+  }
+
+  const table = new Table({
+    head: ["Name", "Circuit State", "Campion Endpoint"],
+  });
 
   for (let i = 0; i < services.length; i++) {
     const currService = services[i];
