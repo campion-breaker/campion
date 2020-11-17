@@ -24,13 +24,11 @@ const initialState = {
 };
 
 const formatUrl = (url) => {
-  const formattedUrl = url.replace(/\//g, "%2F");
-
-  if (formattedUrl.slice(-3) === "%2F") {
-    return formattedUrl.slice(0, -3);
+  if (url.slice(-1) === "/") {
+    return url.slice(0, -1);
   }
 
-  return formattedUrl;
+  return url;
 };
 
 const questions = (state) => [
