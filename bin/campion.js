@@ -11,6 +11,9 @@ switch (argv._[0]) {
   case "add":
     require("../src/commands/add")();
     break;
+  case "list":
+    require("../src/commands/list")();
+    break;
   default:
     console.log("help");
     break;
