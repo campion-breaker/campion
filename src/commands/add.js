@@ -23,6 +23,16 @@ const initialState = {
   TIMESPAN: 60,
 };
 
+const formatUrl = (url) => {
+  const formattedUrl = url.replace(/\//g, "%2F");
+
+  if (formattedUrl.slice(-3) === "%2F") {
+    return formattedUrl.slice(0, -3);
+  }
+
+  return formattedUrl;
+};
+
 const questions = (state) => [
   {
     type: "text",
@@ -36,6 +46,7 @@ const questions = (state) => [
     message: "Enter the service URL: ",
     initial: state.SERVICE || "",
     validate: async (url) => await validateUrl(url),
+    format: (url) => formatUrl(url),
   },
   {
     type: "select",
