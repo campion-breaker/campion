@@ -1,11 +1,11 @@
-const getAllServicesConfigs = require('../utils/getAllServicesConfigs');
-const configDir = require('../utils/configDir');
-const configExists = require('../utils/validateConfig');
-const prompt = require('prompts');
-const loadingBar = require('../utils/loadingBar');
-const servicePromptConfig = require('../utils/servicePromptConfig');
-const updateServicesConfig = require('../workers/api/updateServicesConfig');
-require('dotenv').config({ path: `${configDir}/.env` });
+const prompt = require("prompts");
+const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
+const configDir = require("../utils/configDir");
+const configExists = require("../utils/validateConfig");
+const loadingBar = require("../utils/loadingBar");
+const servicePromptConfig = require("../utils/servicePromptConfig");
+const updateServicesConfig = require("../workers/api/updateServicesConfig");
+require("dotenv").config({ path: `${configDir}/.env` });
 
 const updateSuccessMsg = (service, url) => {
   console.log(`\nService '${service}' successfully updated.`);
@@ -13,9 +13,9 @@ const updateSuccessMsg = (service, url) => {
 
 const questions = (choices) => {
   return {
-    type: 'select',
-    name: 'SERVICE',
-    message: 'Which service would you like to update? ',
+    type: "select",
+    name: "SERVICE",
+    message: "Which service would you like to update? ",
     choices,
   };
 };
@@ -51,11 +51,11 @@ const update = async () => {
   }
 
   const chosenService = await selectService(services);
-  const chosenServiceConfig = serviceConfig(services, chosenServiceConfig);
+  const chosenServiceConfig = serviceConfig(services, chosenService);
   const newState = await servicePromptConfig(chosenServiceConfig);
 
   if (!(Object.keys(newState).length === 10)) {
-    console.log(`\nService update aborted.`);
+    console.log("\nService update aborted.");
     return;
   }
 
