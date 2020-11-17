@@ -29,7 +29,7 @@ const list = async () => {
   }
 
   const table = new Table({
-    head: ['Name', 'Circuitbreaker', 'Campion Endpoint'],
+    head: ["Name", "Circuitbreaker State", "Campion Endpoint"],
   });
 
   for (let i = 0; i < services.length; i++) {
