@@ -1,11 +1,11 @@
-const getAccountId = require('../workers/api/getAccountId');
-const createNamespace = require('../workers/api/createNamespace');
-const createWorkerWithKVBinding = require('../workers/api/createWorkerWithKVBinding');
+const getAccountId = require("../workers/api/getAccountId");
+const createNamespace = require("../workers/api/createNamespace");
+const createWorkerWithKVBinding = require("../workers/api/createWorkerWithKVBinding");
 const fs = require("fs");
 const prompt = require("prompts");
 const absolutePath = require("../utils/configDir");
 const loadingBar = require("../utils/loadingBar");
-const getWorkersDevSubdomain = require('../workers/api/getWorkersDevSubdomain');
+const getWorkersDevSubdomain = require("../workers/api/getWorkersDevSubdomain");
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -47,30 +47,39 @@ const questions = (apiKey, email) => [
   },
 ];
 
-const setup = async () => {
-  createHiddenCampionDir();
-  configMsg();
-
-  const apiKey = process.env.APIKEY;
-  const email = process.env.EMAIL;
-  if (apiKey && email) {
-    writeToFile(await promptUser(apiKey, email));
-  } else {
-    writeToFile(await promptUser());
-  }
-
-  const setupId = loadingBar("Deploying");
+const deploy = async () => {
+  const deployId = loadingBar("Deploying");
   try {
     await getAccountId();
     await createNamespace();
     await createWorkerWithKVBinding();
     await getWorkersDevSubdomain();
-    clearInterval(setupId);
+    clearInterval(deployId);
     configGoodbye();
   } catch (e) {
-    clearInterval(setupId);
+    clearInterval(deployId);
     console.log(e.message);
   }
+};
+
+const setup = async () => {
+  createHiddenCampionDir();
+
+  const apiKey = process.env.APIKEY;
+  const email = process.env.EMAIL;
+
+  configMsg();
+
+  const userInput =
+    apiKey && email ? await promptUser(apiKey, email) : await promptUser();
+
+  if (userInput.apiKey && userInput.email) {
+    writeToFile(userInput);
+    await deploy();
+    return;
+  }
+
+  console.log("\nCanceled. Campion setup aborted.");
 };
 
 module.exports = setup;

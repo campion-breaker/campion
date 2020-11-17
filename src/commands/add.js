@@ -3,6 +3,7 @@ const prompt = require("prompts");
 const loadingBar = require("../utils/loadingBar");
 const fetch = require("node-fetch");
 const getServiceConfig = require("../workers/api/getServiceConfig");
+const configExists = require("../utils/validateConfig");
 
 const addSuccessMsg = (service, url) => {
   console.log(
@@ -140,6 +141,11 @@ const setInitialSericeConfig = async (state) => {
 };
 
 const add = async () => {
+  if (!configExists()) {
+    console.log('Config not found. Run "campion setup" to start.');
+    return;
+  }
+
   const newState = await setInitialSericeConfig(initialState);
 
   if (!(Object.keys(newState).length === 10)) {
