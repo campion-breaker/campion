@@ -1,12 +1,11 @@
-const {
-  getAccountId,
-  createNamespace,
-  createWorkerWithKVBinding,
-} = require("../workers/api");
+const getAccountId = require('../workers/api/getAccountId');
+const createNamespace = require('../workers/api/createNamespace');
+const createWorkerWithKVBinding = require('../workers/api/createWorkerWithKVBinding');
 const fs = require("fs");
 const prompt = require("prompts");
 const absolutePath = require("../utils/configDir");
 const loadingBar = require("../utils/loadingBar");
+const getWorkersDevSubdomain = require('../workers/api/getWorkersDevSubdomain');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -62,13 +61,10 @@ const setup = async () => {
 
   const setupId = loadingBar("Deploying");
   try {
-    try {
-      await getAccountId();
-      await createNamespace();
-      await createWorkerWithKVBinding();
-    } catch (e) {
-      throw new Error(e.message);
-    }
+    await getAccountId();
+    await createNamespace();
+    await createWorkerWithKVBinding();
+    await getWorkersDevSubdomain();
     clearInterval(setupId);
     configGoodbye();
   } catch (e) {
