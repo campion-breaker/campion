@@ -1,23 +1,27 @@
-const getServiceConfig = require('../workers/api/getServiceConfig');
-const getAllServices = require('../workers/api/getAllServices');
+const getAllServicesConfigs = require('../utils/getAllServicesConfigs');
 const configDir = require('../utils/configDir');
-require('dotenv').config({ path: `${configDir}/.env` });
+const configExists = require('../utils/validateConfig');
 const Table = require('cli-table3');
-
-const table = new Table({
-  head: ['Name', 'Circuit State', 'Campion Endpoint'],
-});
+require('dotenv').config({ path: `${configDir}/.env` });
 
 const list = async () => {
-  const services = await getAllServices();
-  let serviceNames = [];
+  if (!configExists()) {
+    console.log('Config not found. Run "campion setup" to start.');
+    return;
+  }
+
+  const table = new Table({
+    head: ['Name', 'Circuit State', 'Campion Endpoint'],
+  });
+
+  const services = await getAllServicesConfigs();
 
   for (let i = 0; i < services.length; i++) {
-    const service = await getServiceConfig(services[i].name);
+    const currService = services[i];
     table.push([
-      service.SERVICE_NAME,
-      service.CIRCUIT_STATE,
-      process.env.SUBDOMAIN + service.SERVICE,
+      currService.SERVICE_NAME,
+      currService.CIRCUIT_STATE,
+      process.env.SUBDOMAIN + currService.SERVICE,
     ]);
   }
 
