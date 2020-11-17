@@ -5,7 +5,7 @@
   "main": "campionApiTesting.js",
   "bin": {
     "campion": "bin/campion.js",
-     "Campion": "bin/campion.js"
+    "Campion": "bin/campion.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cli-table3": "^0.6.0",
     "dotenv": "^8.2.0",
     "form-data": "^3.0.0",
     "minimist": "^1.2.5",
