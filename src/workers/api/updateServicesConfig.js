@@ -23,8 +23,6 @@ async function updateServiceConfig(state) {
   if (!data.ok) {
     throw new Error(JSON.stringify(data)); //`\nFailed to update 'SERVICES_CONFIG'. Please try again.`);
   }
-
-  const body = await data.json();
 }
 
 module.exports = updateServiceConfig;
