@@ -19,17 +19,31 @@ const questions = (choices) => {
   };
 };
 
+const confirm = (choice) => {
+  return {
+    type: "confirm",
+    name: "value",
+    message: `Confirm deletion of '${choice}'? This action cannot be reversed.`,
+    initial: false,
+  };
+};
+
 const selectService = async (services) => {
   const choices = services.map((service) => {
     return {
       title: service.SERVICE_NAME,
-      value: service.SERVICE,
+      value: `${service.SERVICE}&&&${service.SERVICE_NAME}`,
       description: service.SERVICE,
     };
   });
 
-  const chosenService = await prompt(questions(choices));
-  return chosenService;
+  let chosenService = await prompt(questions(choices));
+  chosenService = chosenService.SERVICE.split("&&&");
+
+  return {
+    SERVICE: chosenService[0],
+    SERVICE_NAME: chosenService[1],
+  };
 };
 
 const deleteService = async () => {
@@ -56,13 +70,21 @@ const deleteService = async () => {
   }
 
   const chosenService = await selectService(services);
+  const confirmation = await prompt(confirm(chosenService.SERVICE_NAME));
 
-  const deleteServiceId = loadingBar(`\nUpdating '${newState.SERVICE_NAME}' `);
+  if (!confirmation.value) {
+    console.log("Delete aborted.");
+    return;
+  }
+
+  const deleteServiceId = loadingBar(
+    `\nDeleting '${chosenService.SERVICE_NAME}' `
+  );
 
   try {
-    await deleteServiceRequest(newState);
+    await deleteServiceRequest(chosenService.SERVICE);
     clearInterval(deleteServiceId);
-    deleteServiceSuccessMsg(newState.SERVICE_NAME);
+    deleteServiceSuccessMsg(chosenService.SERVICE_NAME);
   } catch (e) {
     clearInterval(deleteServiceId);
     console.log(e.message);
