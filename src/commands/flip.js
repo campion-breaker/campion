@@ -72,11 +72,9 @@ const flipStatePrompt = async (state) => {
   const newState = await prompt(questions);
   if (newState.CIRCUIT_STATE) {
     state.CIRCUIT_STATE = newState.CIRCUIT_STATE;
-  } else {
-    console.log('\nCircuit flip aborted.');
   }
 
-  return state;
+  return newState;
 };
 
 const buildEventStateChangeKey = (service, newState) => {
@@ -110,19 +108,35 @@ const flip = async () => {
 
   const chosenService = await selectService(services);
 
+  if (Object.keys(chosenService).length === 0) {
+    console.log('\nCircuit flip aborted.');
+    return;
+  }
+
   const newState = await flipStatePrompt({ ...chosenService.SERVICE });
+
+  if (Object.keys(newState).length === 0) {
+    console.log('\nCircuit flip aborted.');
+    return;
+  } else {
+    chosenService.SERVICE.CIRCUIT_STATE = newState.CIRCUIT_STATE;
+  }
+
   await logEventStateChange(
     buildEventStateChangeKey(chosenService.SERVICE, newState.CIRCUIT_STATE)
   );
 
   const updateId = loadingBar(
-    `\nFlipping '${newState.SERVICE_NAME}' to ${newState.CIRCUIT_STATE} `
+    `\nFlipping '${chosenService.SERVICE.SERVICE_NAME}' to ${newState.CIRCUIT_STATE} `
   );
 
   try {
-    await updateServicesConfig(newState);
+    await updateServicesConfig(chosenService.SERVICE);
     clearInterval(updateId);
-    flipSuccessMsg(newState.SERVICE_NAME, newState.CIRCUIT_STATE);
+    flipSuccessMsg(
+      chosenService.SERVICE.SERVICE_NAME,
+      chosenService.SERVICE.CIRCUIT_STATE
+    );
   } catch (e) {
     clearInterval(updateId);
     console.log(e.message);
