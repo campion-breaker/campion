@@ -1,6 +1,7 @@
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
   const service = await getServiceObj(serviceId);
+
   const requestMetrics = {
     requestReceived: Date.now(),
     circuitState: service.CIRCUIT_STATE,
@@ -16,23 +17,25 @@ async function handleRequest(request) {
 
     if (service.CIRCUIT_STATE === "OPEN") {
       requestMetrics.circuitState = "OPEN";
-
+      await logRequestMetrics(requestMetrics);
       return new Response("Circuit is open", { status: 504 });
     }
   }
 
   if (service.CIRCUIT_STATE === "HALF-OPEN" && !canRequestProceed(service)) {
     requestMetrics.circuitState = "HALF_OPEN";
+    await logRequestMetrics(requestMetrics);
     return new Response("Circuit is half-open", { status: 504 });
   }
+
   requestMetrics.serviceRequested = Date.now();
   const response = await processRequest(service);
   requestMetrics.requestProcessed = Date.now();
   requestMetrics.requestStatus = response.status;
 
-  updateCircuitState(service, serviceId, response);
+  await updateCircuitState(service, serviceId, response);
 
-  logRequestMetrics(requestMetrics);
+  await logRequestMetrics(requestMetrics);
 
   return new Response(response.body, {
     status: response.status,
@@ -176,7 +179,16 @@ async function requestLogCount(serviceId) {
 }
 
 async function logRequestMetrics(metrics) {
-  TRAFFIC.put;
+  metrics.latency =
+    Number(metrics.requestProcessed) - Number(metrics.serviceRequested);
+
+  const key = `@service=${metrics.service}@status=${
+    metrics.requestStatus || ""
+  }@state=${metrics.circuitState}@time=${metrics.requestReceived}@lat=${
+    metrics.latency || ""
+  }`;
+
+  await TRAFFIC.put(key, "");
 }
 
 addEventListener("fetch", (event) => {
