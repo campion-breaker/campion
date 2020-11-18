@@ -7,7 +7,7 @@ const updateServicesConfig = require("../workers/api/updateServicesConfig");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const flipSuccessMsg = (service, newState) => {
-  console.log(`\n'${service}' is now ${newState}.`);
+  console.log(`\n'${service}' successfully set to ${newState}.`);
 };
 
 const questions = (choices) => {
@@ -29,11 +29,12 @@ const selectService = async (services) => {
   });
 
   const chosenService = await prompt(questions(choices));
+
   return chosenService;
 };
 
 const flipStatePrompt = async (state) => {
-  const states = ["CLOSED", "OPEN", "HALF-OPEN"];
+  const states = ["CLOSED", "OPEN", "HALF-OPEN", "FORCED-OPEN"];
 
   const initial = states.indexOf(state.CIRCUIT_STATE);
 
@@ -50,7 +51,7 @@ const flipStatePrompt = async (state) => {
       {
         title: "OPEN",
         value: "OPEN",
-        description: "The service is unavailable to all traffic.",
+        description: `The service is unavailable to all traffic for ${state.ERROR_TIMEOUT} (ERROR_TIMEOUT) seconds.`,
       },
       {
         title: "HALF-OPEN",
@@ -58,12 +59,22 @@ const flipStatePrompt = async (state) => {
         description:
           "The breaker will let a portion of traffic through to the service.",
       },
+      {
+        title: "FORCED-OPEN",
+        value: "FORCED-OPEN",
+        description:
+          "The service is unavailable to all traffic until breaker is manually reopened.",
+      },
     ],
     initial,
   };
 
   const newState = await prompt(questions);
-  state.CIRCUIT_STATE = newState.CIRCUIT_STATE;
+  if (newState.CIRCUIT_STATE) {
+    state.CIRCUIT_STATE = newState.CIRCUIT_STATE;
+  } else {
+    console.log("\nCircuit flip aborted.");
+  }
 
   return state;
 };
@@ -92,10 +103,11 @@ const flip = async () => {
   }
 
   const chosenService = await selectService(services);
+
   const newState = await flipStatePrompt(chosenService.SERVICE);
 
   const updateId = loadingBar(
-    `\nFlipping '${newState.SERVICE_NAME}' to ${newState.CIRCUIT_STATE}.`
+    `\nFlipping '${newState.SERVICE_NAME}' to ${newState.CIRCUIT_STATE} `
   );
 
   try {
