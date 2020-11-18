@@ -12,6 +12,12 @@ async function handleRequest(request) {
     return new Response("Circuit breaker doesn't exist", { status: 404 });
   }
 
+  if (service.CIRCUIT_STATE ==== "FORCED_OPEN") {
+      requestMetrics.circuitState = "FORCED_OPEN";
+      await logRequestMetrics(requestMetrics);
+      return new Response("Circuit has been manually force-opened. Adjust in Campion.", { status: 504 });
+  }
+
   if (service.CIRCUIT_STATE === "OPEN") {
     await setStateWhenOpen(service, serviceId);
 
