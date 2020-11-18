@@ -1,6 +1,11 @@
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
   const service = await getServiceObj(serviceId);
+  const requestMetrics = {
+    requestReceived: Date.now(),
+    circuitState: service.CIRCUIT_STATE,
+    service: service.SERVICE,
+  };
 
   if (service === null) {
     return new Response("Circuit breaker doesn't exist", { status: 404 });
@@ -10,17 +15,25 @@ async function handleRequest(request) {
     await setStateWhenOpen(service, serviceId);
 
     if (service.CIRCUIT_STATE === "OPEN") {
+      requestMetrics.circuitState = "OPEN";
+
       return new Response("Circuit is open", { status: 504 });
     }
-  } else if (
-    service.CIRCUIT_STATE === "HALF-OPEN" &&
-    !canRequestProceed(service)
-  ) {
-    return new Response("Circuit is half-open", { status: 504 });
   }
 
+  if (service.CIRCUIT_STATE === "HALF-OPEN" && !canRequestProceed(service)) {
+    requestMetrics.circuitState = "HALF_OPEN";
+    return new Response("Circuit is half-open", { status: 504 });
+  }
+  requestMetrics.serviceRequested = Date.now();
   const response = await processRequest(service);
-  await updateCircuitState(service, serviceId, response);
+  requestMetrics.requestProcessed = Date.now();
+  requestMetrics.requestStatus = response.status;
+
+  updateCircuitState(service, serviceId, response);
+
+  logRequestMetrics(requestMetrics);
+
   return new Response(response.body, {
     status: response.status,
     headers: response.headers,
@@ -28,11 +41,11 @@ async function handleRequest(request) {
 }
 
 function getServiceId(url) {
-  if (url.slice(-1) === '/') {
+  if (url.slice(-1) === "/") {
     url = url.slice(0, -1);
   }
 
-  return url.split('workers.dev/service?id=')[1];
+  return url.split("workers.dev/service?id=")[1];
 }
 
 async function getServiceObj(serviceId) {
@@ -51,7 +64,7 @@ function canRequestProceed(service) {
 async function processRequest(service) {
   let timeoutId;
 
-  const timeoutPromise = new Promise(resolutionFunc => {
+  const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
@@ -160,6 +173,10 @@ async function requestLogCount(serviceId) {
   ).length;
   const successes = log.filter((obj) => obj.name.includes("@SUCCESS_")).length;
   return { serviceFailures, networkFailures, successes };
+}
+
+async function logRequestMetrics(metrics) {
+  TRAFFIC.put;
 }
 
 addEventListener("fetch", (event) => {
