@@ -7,7 +7,10 @@ require("dotenv").config({ path: `${configDir}/.env` });
 async function createWorkerWithKVBinding() {
   const accountId = process.env.ACCOUNT_ID;
   const newWorkerId = "campion";
-  const scriptData = fs.readFileSync(`${__dirname}/../circuitBreaker.js`, "utf8");
+  const scriptData = fs.readFileSync(
+    `${__dirname}/../circuitBreaker.js`,
+    "utf8"
+  );
   const metadata = {
     body_part: "script",
     bindings: [
@@ -20,6 +23,16 @@ async function createWorkerWithKVBinding() {
         type: "kv_namespace",
         name: "SERVICES_CONFIG",
         namespace_id: process.env.SERVICES_CONFIG_ID,
+      },
+      {
+        type: "kv_namespace",
+        name: "EVENTS",
+        namespace_id: process.env.EVENTS_ID,
+      },
+      {
+        type: "kv_namespace",
+        name: "TRAFFIC",
+        namespace_id: process.env.TRAFFIC_ID,
       },
     ],
   };
