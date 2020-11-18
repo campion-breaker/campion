@@ -1,11 +1,11 @@
-const update = require('../workers/api/updateServicesConfig');
-const loadingBar = require('../utils/loadingBar');
-const configExists = require('../utils/validateConfig');
-const servicePromptConfig = require('../utils/servicePromptConfig');
+const update = require("../workers/api/updateServicesConfig");
+const loadingBar = require("../utils/loadingBar");
+const configExists = require("../utils/validateConfig");
+const servicePromptConfig = require("../utils/servicePromptConfig");
 
 const addSuccessMsg = (service, url) => {
   console.log(
-    `\nService '${service}' now protected at ${process.env.SUBDOMAIN}${url}.`
+    `\nService '${service}' now protected at ${process.env.SUBDOMAIN}${url}`
   );
 };
 
