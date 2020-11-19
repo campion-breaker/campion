@@ -55,7 +55,8 @@ async function createWorkerWithKVBinding() {
 
   if (!uploadWorker.ok) {
     throw new Error(
-      `\nFailed to deploy Campion to Cloudflare. Please try again.`
+      console.log(await uploadWorker.json())
+      // `\nFailed to deploy Campion to Cloudflare. Please try again.`
     );
   }
 
