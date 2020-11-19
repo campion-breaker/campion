@@ -10,7 +10,7 @@ function App() {
         <img src={logo} className="App-logo" alt="logo" />
         <p>
           Account id:
-          {process.env.REACT_APP_HELLO}
+          { process.env.REACT_APP_APIKEY }
         </p>
         <a
           className="App-link"
