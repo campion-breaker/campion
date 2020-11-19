@@ -1,11 +1,12 @@
-const prompt = require("prompts");
-const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
-const configDir = require("../utils/configDir");
-const configExists = require("../utils/validateConfig");
-const loadingBar = require("../utils/loadingBar");
-const servicePromptConfig = require("../utils/servicePromptConfig");
-const updateServicesConfig = require("../workers/api/updateServicesConfig");
-require("dotenv").config({ path: `${configDir}/.env` });
+const prompt = require('prompts');
+const getAllServicesConfigs = require('../utils/getAllServicesConfigs');
+const configDir = require('../utils/configDir');
+const configExists = require('../utils/validateConfig');
+const loadingBar = require('../utils/loadingBar');
+const servicePromptConfig = require('../utils/servicePromptConfig');
+const updateServicesConfig = require('../workers/api/updateServicesConfig');
+const logEventStateChange = require('../workers/api/logEventStateChange');
+require('dotenv').config({ path: `${configDir}/.env` });
 
 const updateSuccessMsg = (service) => {
   console.log(`\nService '${service}' successfully updated.`);
@@ -13,9 +14,9 @@ const updateSuccessMsg = (service) => {
 
 const questions = (choices) => {
   return {
-    type: "select",
-    name: "SERVICE",
-    message: "Which service would you like to update? ",
+    type: 'select',
+    name: 'SERVICE',
+    message: 'Which service would you like to update? ',
     choices,
   };
 };
@@ -37,6 +38,10 @@ const serviceConfig = (services, chosenService) => {
   return services.find((service) => service.SERVICE === chosenService.SERVICE);
 };
 
+const buildEventStateChangeKey = (service) => {
+  return `@CONFIG_CHANGE@TIME=${Date.now()}@${JSON.stringify(service)}@UPDATE`;
+};
+
 const update = async () => {
   if (!configExists()) {
     console.log('Config not found. Run "campion setup" to start.');
@@ -44,12 +49,12 @@ const update = async () => {
   }
 
   let services;
-  const retrieveId = loadingBar("Retrieving services ");
+  const retrieveId = loadingBar('Retrieving services ');
 
   try {
     services = await getAllServicesConfigs();
     clearInterval(retrieveId);
-    console.log("\n");
+    console.log('\n');
   } catch (e) {
     clearInterval(retrieveId);
     console.log(e.message);
@@ -65,7 +70,7 @@ const update = async () => {
   const newState = await servicePromptConfig(chosenServiceConfig);
 
   if (!(Object.keys(newState).length === 10)) {
-    console.log("\nService update aborted.");
+    console.log('\nService update aborted.');
     return;
   }
 
@@ -73,6 +78,7 @@ const update = async () => {
 
   try {
     await updateServicesConfig(newState);
+    await logEventStateChange(buildEventStateChangeKey(newState));
     clearInterval(updateId);
     updateSuccessMsg(newState.SERVICE_NAME);
   } catch (e) {
