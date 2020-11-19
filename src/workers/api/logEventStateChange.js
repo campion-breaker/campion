@@ -14,7 +14,6 @@ const logEventStateChange = async (key) => {
         'X-Auth-Key': process.env.APIKEY,
         'Content-Type': 'text/plain',
       },
-      body: '',
     }
   );
 };
