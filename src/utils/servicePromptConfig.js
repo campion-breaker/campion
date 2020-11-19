@@ -1,8 +1,5 @@
-const update = require('../workers/api/updateServicesConfig');
 const prompt = require('prompts');
 const fetch = require('node-fetch');
-const getServiceConfig = require('../workers/api/getServiceConfig');
-const configExists = require('../utils/validateConfig');
 
 const initialState = {
   CIRCUIT_STATE: 'CLOSED',

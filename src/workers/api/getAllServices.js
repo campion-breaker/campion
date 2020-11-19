@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
-const configDir = require("../../utils/configDir");
-require("dotenv").config({ path: `${configDir}/.env` });
+const fetch = require('node-fetch');
+const configDir = require('../../utils/configDir');
+require('dotenv').config({ path: `${configDir}/.env` });
 
 async function getServiceConfig() {
   const acctId = process.env.ACCOUNT_ID;
@@ -9,11 +9,11 @@ async function getServiceConfig() {
   const data = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${acctId}/storage/kv/namespaces/${configNamespaceId}/keys`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "X-Auth-Email": process.env.EMAIL,
-        "X-Auth-Key": process.env.APIKEY,
-        "Content-Type": "application/json",
+        'X-Auth-Email': process.env.EMAIL,
+        'X-Auth-Key': process.env.APIKEY,
+        'Content-Type': 'application/json',
       },
     }
   );
