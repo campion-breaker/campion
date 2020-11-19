@@ -40,4 +40,9 @@ program
   .description("Manually flip the state of a service's circuit breaker")
   .action(() => require("../src/commands/flip")());
 
+program
+  .command("stats")
+  .description("View Campion stats in a browser window.")
+  .action(() => require("../src/commands/stats")());
+
 program.parse(process.argv);

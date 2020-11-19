@@ -9,8 +9,6 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Account id:
-          { process.env.REACT_APP_APIKEY }
         </p>
         <a
           className="App-link"

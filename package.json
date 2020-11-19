@@ -4,7 +4,8 @@
   "description": "Circuit Breaker",
   "main": "campionApiTesting.js",
   "bin": {
-    "campion": "bin/campion.js"
+    "campion": "bin/campion.js",
+    "start_server": "front_end/server/server.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const express = require("express");
 const app = express();
 const host = "localhost";
@@ -5,7 +7,7 @@ const port = 6969;
 
 app.use(express.static(__dirname + "/../app/build/"));
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.sendFile(__dirname + "/../app/build/index.html")
 });
 
