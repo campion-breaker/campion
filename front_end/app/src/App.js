@@ -1,5 +1,7 @@
+import os from "os";
 import logo from './logo.svg';
 import './App.css';
+require("dotenv").config({ path: `${os.homedir()}/.campion/.env` });
 
 function App() {
   return (
@@ -7,7 +9,8 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+          Account id:
+          {process.env.REACT_APP_HELLO}
         </p>
         <a
           className="App-link"
