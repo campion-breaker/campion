@@ -1,24 +1,15 @@
-const http = require("http");
-const fs = require("fs").promises;
+const express = require("express");
+const app = express();
 const host = "localhost";
 const port = 6969;
-let indexFile;
 
-const requestListener = (req, res) => {
-  res.end(indexFile);
-};
+app.use(express.static(__dirname + "/../app/build/"));
 
-const server = http.createServer(requestListener);
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + "/../app/build/index.html")
+});
 
-fs.readFile(__dirname + "/../app/build/index.html")
-  .then((contents) => {
-    indexFile = contents;
-    server.listen(port, host, () => {
-      console.log(`Server is now running at http://${host}:${port}.`);
-      console.log("Control + C to quit.");
-    });
-  })
-  .catch((err) => {
-    console.error(`Could not read index.html file: ${err}`);
-    process.exit(1);
-  });
+app.listen(port, host, () => {
+  console.log(`Server is now running at https://${host}:${port}.`);
+  console.log('Control + C to quit.');
+});
