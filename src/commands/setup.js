@@ -26,9 +26,21 @@ const configGoodbye = () => {
 const promptUser = async (apiKey, email) =>
   await prompt(questions(apiKey, email));
 
+const clearExistingIds = () => {
+  process.env.ACCOUNT_ID = null;
+  process.env.TRAFFIC_ID = null;
+  process.env.EVENTS_ID = null;
+  process.env.REQUEST_LOG_ID = null;
+  process.env.SERVICES_CONFIG_ID = null;
+  process.env.SUBDOMAIN = null;
+};
+
 const writeToFile = ({ apiKey, email }) => {
   process.env.APIKEY = apiKey;
   process.env.EMAIL = email;
+
+  clearExistingIds();
+
   fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
 };
 
