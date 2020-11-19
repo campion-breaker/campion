@@ -23,5 +23,6 @@
     "node-fetch": "^2.6.1",
     "prettier": "^2.1.2",
     "prompts": "^2.4.0"
-  }
+  },
+  "type": "module"
 }
