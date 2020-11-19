@@ -5,8 +5,6 @@ const port = 6969;
 let indexFile;
 
 const requestListener = (req, res) => {
-  res.setHeader("Content-Type", "text/html");
-  res.writeHead(200);
   res.end(indexFile);
 };
 
