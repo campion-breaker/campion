@@ -60,7 +60,7 @@ const questions = (apiKey, email) => [
 ];
 
 const deploy = async () => {
-  const deployId = loadingBar("Deploying");
+  const deployId = loadingBar("Deploying ");
   try {
     await getAccountId();
     await createNamespace();
