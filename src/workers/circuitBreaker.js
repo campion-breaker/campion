@@ -43,7 +43,6 @@ async function handleRequest(request) {
   requestMetrics.requestStatus = response.status;
 
   await updateCircuitState(service, serviceId, response);
-
   await logRequestMetrics(requestMetrics);
 
   return new Response(response.body, {
