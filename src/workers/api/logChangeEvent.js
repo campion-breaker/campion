@@ -16,6 +16,10 @@ const logChangeEvent = async (key) => {
       },
     }
   );
+
+  if (!data.ok) {
+    throw new Error("Failed to log Change Event to 'EVENTS' namespace.");
+  }
 };
 
 module.exports = logChangeEvent;
