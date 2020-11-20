@@ -2,12 +2,12 @@ const fetch = require('node-fetch');
 const configDir = require('../../utils/configDir');
 require('dotenv').config({ path: `${configDir}/.env` });
 
-async function getServiceConfig() {
+async function getAllKeys(namespace) {
   const acctId = process.env.ACCOUNT_ID;
-  const configNamespaceId = process.env.SERVICES_CONFIG_ID;
+  const namespaceId = process.env[namespace];
 
   const data = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${acctId}/storage/kv/namespaces/${configNamespaceId}/keys`,
+    `https://api.cloudflare.com/client/v4/accounts/${acctId}/storage/kv/namespaces/${namespaceId}/keys`,
     {
       method: 'GET',
       headers: {
@@ -20,10 +20,10 @@ async function getServiceConfig() {
 
   if (data.ok) {
     const body = await data.json();
-    return body.result;
+    return body.result.map((key) => JSON.parse(key.name));
   } else {
-    throw new Error(`\nUnable to list services.`);
+    throw new Error(`\nUnable to retrives ${namespace} keys.`);
   }
 }
 
-module.exports = getServiceConfig;
+module.exports = getAllKeys;

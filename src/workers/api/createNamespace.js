@@ -1,7 +1,7 @@
-const fetch = require("node-fetch");
-const configDir = require("../../utils/configDir");
-const writeIdToEnv = require("../../utils/writeIdToEnv");
-require("dotenv").config({ path: `${configDir}/.env` });
+const fetch = require('node-fetch');
+const configDir = require('../../utils/configDir');
+const writeIdToEnv = require('../../utils/writeIdToEnv');
+require('dotenv').config({ path: `${configDir}/.env` });
 
 async function getNamespaceIds() {
   const accountId = process.env.ACCOUNT_ID;
@@ -13,11 +13,11 @@ async function getNamespaceIds() {
   const data = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "X-Auth-Email": process.env.EMAIL,
-        "X-Auth-Key": process.env.APIKEY,
-        "Content-Type": "application/json",
+        'X-Auth-Email': process.env.EMAIL,
+        'X-Auth-Key': process.env.APIKEY,
+        'Content-Type': 'application/json',
       },
     }
   );
@@ -26,25 +26,25 @@ async function getNamespaceIds() {
     const body = await data.json();
 
     if (body.result.length > 0) {
-      requestLog = body.result.find((obj) => obj.title === "REQUEST_LOG");
+      requestLog = body.result.find((obj) => obj.title === 'REQUEST_LOG');
       servicesConfig = body.result.find(
-        (obj) => obj.title === "SERVICES_CONFIG"
+        (obj) => obj.title === 'SERVICES_CONFIG'
       );
-      events = body.result.find(obj => obj.title === "EVENTS");
-      traffic = body.result.find(obj => obj.title === "TRAFFIC");
+      events = body.result.find((obj) => obj.title === 'EVENTS');
+      traffic = body.result.find((obj) => obj.title === 'TRAFFIC');
     }
 
     if (requestLog) {
-      writeIdToEnv("REQUEST_LOG_ID", requestLog.id);
+      writeIdToEnv('REQUEST_LOG_ID', requestLog.id);
     }
     if (servicesConfig) {
-      writeIdToEnv("SERVICES_CONFIG_ID", servicesConfig.id);
+      writeIdToEnv('SERVICES_CONFIG_ID', servicesConfig.id);
     }
     if (events) {
-      writeIdToEnv("EVENTS_ID", events.id);
+      writeIdToEnv('EVENTS_ID', events.id);
     }
     if (traffic) {
-      writeIdToEnv("TRAFFIC_ID", traffic.id);
+      writeIdToEnv('TRAFFIC_ID', traffic.id);
     }
   } else {
     throw new Error(`\nUnable to retrieve KV Namespaces.`);
@@ -56,11 +56,11 @@ const createNewKVNamespace = async (name) => {
   const data = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces`,
     {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "X-Auth-Email": process.env.EMAIL,
-        "X-Auth-Key": process.env.APIKEY,
-        "Content-Type": "application/json",
+        'X-Auth-Email': process.env.EMAIL,
+        'X-Auth-Key': process.env.APIKEY,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ title: name }),
     }
@@ -70,9 +70,7 @@ const createNewKVNamespace = async (name) => {
     const body = await data.json();
     writeIdToEnv(name + '_ID', body.result.id);
   } else {
-    throw new Error(
-      `\nFailed to build KV Namespace. Please try again.`
-    );
+    throw new Error(`\nFailed to build KV Namespace. Please try again.`);
   }
 };
 
@@ -94,5 +92,3 @@ async function createNamespace() {
 }
 
 module.exports = createNamespace;
-
-

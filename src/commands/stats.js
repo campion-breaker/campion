@@ -1,10 +1,11 @@
-const { exec } = require("child_process");
+const { spawn } = require('child_process');
+const open = require('open');
 
 const stats = () => {
-  exec("start_server", (err, stderr, stdout) => {
-    console.log(`stdout: ${stdout}`);
-    console.log(`Server is now running at https://${host}:${port}.`);
-    console.log("Control + C to quit.");
+  const server = spawn('start_server');
+  server.stdout.on('data', (data) => {
+    console.log(`${data}`);
+    (async () => await open('https://localhost:7777'))();
   });
 };
 

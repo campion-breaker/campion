@@ -25,17 +25,17 @@ const formatUrl = (url) => {
 const questions = (state) => [
   {
     type: 'text',
-    name: 'SERVICE_NAME',
-    message: 'Enter the name of the service: ',
-    initial: state.SERVICE_NAME || '',
-  },
-  {
-    type: 'text',
     name: 'SERVICE',
     message: 'Enter the service URL: ',
     initial: state.SERVICE || '',
     validate: async (url) => await validateUrl(url),
     format: (url) => formatUrl(url),
+  },
+  {
+    type: 'text',
+    name: 'SERVICE_NAME',
+    message: 'Enter the name of the service: ',
+    initial: state.SERVICE_NAME || '',
   },
   {
     type: 'number',

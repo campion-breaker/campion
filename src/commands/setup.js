@@ -1,11 +1,11 @@
-const getAccountId = require("../workers/api/getAccountId");
-const createNamespace = require("../workers/api/createNamespace");
-const createWorkerWithKVBinding = require("../workers/api/createWorkerWithKVBinding");
-const fs = require("fs");
-const prompt = require("prompts");
-const absolutePath = require("../utils/configDir");
-const loadingBar = require("../utils/loadingBar");
-const getWorkersDevSubdomain = require("../workers/api/getWorkersDevSubdomain");
+const getAccountId = require('../workers/api/getAccountId');
+const createNamespace = require('../workers/api/createNamespace');
+const createWorkerWithKVBinding = require('../workers/api/createWorkerWithKVBinding');
+const fs = require('fs');
+const prompt = require('prompts');
+const absolutePath = require('../utils/configDir');
+const loadingBar = require('../utils/loadingBar');
+const getWorkersDevSubdomain = require('../workers/api/getWorkersDevSubdomain');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -14,7 +14,7 @@ const createHiddenCampionDir = () => {
 };
 
 const configMsg = () => {
-  console.log("Campion Config:\n");
+  console.log('Campion Config:\n');
 };
 
 const configGoodbye = () => {
@@ -27,12 +27,12 @@ const promptUser = async (apiKey, email) =>
   await prompt(questions(apiKey, email));
 
 const clearExistingIds = () => {
-  process.env.ACCOUNT_ID = null;
-  process.env.TRAFFIC_ID = null;
-  process.env.EVENTS_ID = null;
-  process.env.REQUEST_LOG_ID = null;
-  process.env.SERVICES_CONFIG_ID = null;
-  process.env.SUBDOMAIN = null;
+  process.env.ACCOUNT_ID = '';
+  process.env.TRAFFIC_ID = '';
+  process.env.EVENTS_ID = '';
+  process.env.REQUEST_LOG_ID = '';
+  process.env.SERVICES_CONFIG_ID = '';
+  process.env.SUBDOMAIN = '';
 };
 
 const writeToFile = ({ apiKey, email }) => {
@@ -50,21 +50,21 @@ const writeToFile = ({ apiKey, email }) => {
 
 const questions = (apiKey, email) => [
   {
-    type: "text",
-    name: "email",
-    message: "Enter the email associated with your Cloudflare account:",
-    initial: email || "",
+    type: 'text',
+    name: 'email',
+    message: 'Enter the email associated with your Cloudflare account:',
+    initial: email || '',
   },
   {
-    type: "text",
-    name: "apiKey",
-    message: "Enter your Cloudflare Global API Key:",
-    initial: apiKey || "",
+    type: 'text',
+    name: 'apiKey',
+    message: 'Enter your Cloudflare Global API Key:',
+    initial: apiKey || '',
   },
 ];
 
 const deploy = async () => {
-  const deployId = loadingBar("Deploying ");
+  const deployId = loadingBar('Deploying ');
   try {
     await getAccountId();
     await createNamespace();
@@ -95,7 +95,7 @@ const setup = async () => {
     return;
   }
 
-  console.log("\nCanceled. Campion setup aborted.");
+  console.log('\nCanceled. Campion setup aborted.');
 };
 
 module.exports = setup;
