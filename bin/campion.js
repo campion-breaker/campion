@@ -45,4 +45,10 @@ program
   .description("View Campion stats in a browser window.")
   .action(() => require("../src/commands/stats")());
 
+program
+  .command("w")
+  .alias("wipe")
+  .description("Clear all Campion information from Cloudflare.")
+  .action(() => require("../src/commands/wipe")());
+
 program.parse(process.argv);
