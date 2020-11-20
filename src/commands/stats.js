@@ -5,7 +5,7 @@ const stats = () => {
   const server = spawn('start_server');
   server.stdout.on('data', (data) => {
     console.log(`${data}`);
-    (async () => await open('https://localhost:7777'))();
+    (async () => await open('http://localhost:7777'))();
   });
 };
 
