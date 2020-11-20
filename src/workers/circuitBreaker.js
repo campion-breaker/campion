@@ -133,7 +133,7 @@ async function setStateWhenHalfOpen(service, serviceId) {
     serviceId
   );
 
-  if (successes >= 1) {
+  if (successes >= service.SUCCESS_THRESHOLD) {
     await flipCircuitState(serviceId, service, "CLOSED");
   } else if (
     networkFailures >= service.NETWORK_FAILURE_THRESHOLD ||
@@ -204,11 +204,13 @@ async function logRequestMetrics(metrics) {
   metrics.latency =
     Number(metrics.requestProcessed) - Number(metrics.serviceRequested);
 
-  const key = `@service=${metrics.service}@status=${
-    metrics.requestStatus || ""
-  }@state=${metrics.circuitState}@time=${metrics.requestReceived}@lat=${
-    metrics.latency || ""
-  }`;
+  const key = JSON.stringify({
+    service: metrics.service,
+    status: metrics.requestStatus || "",
+    state: metrics.circuitState,
+    time: metrics.requestReceived,
+    latency: metrics.latency || "",
+  });
 
   await TRAFFIC.put(key, "");
 }
