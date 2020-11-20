@@ -1,11 +1,11 @@
-const prompt = require('prompts');
-const getAllKeys = require('../workers/api/getAllKeys');
-const configDir = require('../utils/configDir');
-const configExists = require('../utils/validateConfig');
-const loadingBar = require('../utils/loadingBar');
-const updateServicesConfig = require('../utils/updateServicesConfig');
-const logChangeEvent = require('../workers/api/logChangeEvent');
-require('dotenv').config({ path: `${configDir}/.env` });
+const prompt = require("prompts");
+const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
+const configDir = require("../utils/configDir");
+const configExists = require("../utils/validateConfig");
+const loadingBar = require("../utils/loadingBar");
+const putServicesConfig = require("../workers/api/putServicesConfig");
+const logChangeEvent = require("../workers/api/logChangeEvent");
+require("dotenv").config({ path: `${configDir}/.env` });
 
 const flipSuccessMsg = (service, newState) => {
   console.log(`\n'${service}' successfully set to ${newState}.`);
@@ -13,8 +13,8 @@ const flipSuccessMsg = (service, newState) => {
 
 const questions = (choices) => {
   return {
-    type: 'select',
-    name: 'SERVICE',
+    type: "select",
+    name: "SERVICE",
     message: "Which service's state would you like to flip? ",
     choices,
   };
@@ -35,35 +35,35 @@ const selectService = async (services) => {
 };
 
 const flipStatePrompt = async (state) => {
-  const states = ['CLOSED', 'OPEN', 'HALF-OPEN', 'FORCED-OPEN'];
+  const states = ["CLOSED", "OPEN", "HALF-OPEN", "FORCED-OPEN"];
   const initial = states.indexOf(state.CIRCUIT_STATE);
 
   const questions = {
-    type: 'select',
-    name: 'CIRCUIT_STATE',
-    message: 'Set the current state of the Breaker: ',
+    type: "select",
+    name: "CIRCUIT_STATE",
+    message: "Set the current state of the Breaker: ",
     choices: [
       {
-        title: 'CLOSED',
-        value: 'CLOSED',
-        description: 'The service is available to all traffic.',
+        title: "CLOSED",
+        value: "CLOSED",
+        description: "The service is available to all traffic.",
       },
       {
-        title: 'OPEN',
-        value: 'OPEN',
+        title: "OPEN",
+        value: "OPEN",
         description: `The service is unavailable to all traffic for ${state.ERROR_TIMEOUT} (ERROR_TIMEOUT) seconds.`,
       },
       {
-        title: 'HALF-OPEN',
-        value: 'HALF-OPEN',
+        title: "HALF-OPEN",
+        value: "HALF-OPEN",
         description:
-          'The breaker will let a portion of traffic through to the service.',
+          "The breaker will let a portion of traffic through to the service.",
       },
       {
-        title: 'FORCED-OPEN',
-        value: 'FORCED-OPEN',
+        title: "FORCED-OPEN",
+        value: "FORCED-OPEN",
         description:
-          'The service is unavailable to all traffic until breaker is manually reopened.',
+          "The service is unavailable to all traffic until breaker is manually reopened.",
       },
     ],
     initial,
@@ -80,11 +80,11 @@ const flipStatePrompt = async (state) => {
 const buildEventStateChangeKey = (service, newState) => {
   const stateChangeEntry = {
     ID: service.SERVICE,
-    EVENT: 'STATE_CHANGE',
+    EVENT: "STATE_CHANGE",
     TIME: Date.now(),
     OLD_STATE: service.CIRCUIT_STATE,
     NEW_STATE: newState,
-    MODE: 'FLIP',
+    MODE: "FLIP",
   };
 
   return JSON.stringify(stateChangeEntry);
@@ -97,12 +97,12 @@ const flip = async () => {
   }
 
   let services;
-  const retrieveId = loadingBar('Retrieving services ');
+  const retrieveId = loadingBar("Retrieving services ");
 
   try {
-    services = await getAllKeys('SERVICES_CONFIG_ID');
+    services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
     clearInterval(retrieveId);
-    console.log('\n');
+    console.log("\n");
   } catch (e) {
     clearInterval(retrieveId);
     console.log(e.message);
@@ -114,17 +114,16 @@ const flip = async () => {
   }
 
   const chosenService = await selectService(services);
-  const originalService = { ...chosenService };
 
   if (Object.keys(chosenService).length === 0) {
-    console.log('\nCircuit flip aborted.');
+    console.log("\nCircuit flip aborted.");
     return;
   }
 
   const newState = await flipStatePrompt({ ...chosenService });
 
   if (Object.keys(newState).length === 0) {
-    console.log('\nCircuit flip aborted.');
+    console.log("\nCircuit flip aborted.");
     return;
   } else {
     chosenService.CIRCUIT_STATE = newState;
@@ -137,7 +136,7 @@ const flip = async () => {
   );
 
   try {
-    await updateServicesConfig(originalService, chosenService);
+    await putServicesConfig(chosenService);
     clearInterval(updateId);
     flipSuccessMsg(chosenService.SERVICE_NAME, chosenService.CIRCUIT_STATE);
   } catch (e) {

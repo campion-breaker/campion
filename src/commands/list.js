@@ -1,9 +1,9 @@
-const getAllKeys = require('../workers/api/getAllKeys');
-const configDir = require('../utils/configDir');
-const configExists = require('../utils/validateConfig');
-const Table = require('cli-table3');
-const loadingBar = require('../utils/loadingBar');
-require('dotenv').config({ path: `${configDir}/.env` });
+const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
+const configDir = require("../utils/configDir");
+const configExists = require("../utils/validateConfig");
+const Table = require("cli-table3");
+const loadingBar = require("../utils/loadingBar");
+require("dotenv").config({ path: `${configDir}/.env` });
 
 const list = async () => {
   if (!configExists()) {
@@ -12,24 +12,24 @@ const list = async () => {
   }
 
   let services;
-  const retrieveId = loadingBar('Retrieving services ');
+  const retrieveId = loadingBar("Retrieving services ");
 
   try {
-    services = await getAllKeys('SERVICES_CONFIG_ID');
+    services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
     clearInterval(retrieveId);
-    console.log('\n');
+    console.log("\n");
   } catch (e) {
     clearInterval(retrieveId);
     console.log(e.message);
   }
 
   if (services.length === 0) {
-    console.log('\nNo services found.');
+    console.log("\nNo services found.");
     return;
   }
 
   const table = new Table({
-    head: ['Name', 'Circuit Breaker State', 'Campion Endpoint'],
+    head: ["Name", "Circuit Breaker State", "Campion Endpoint"],
   });
 
   for (let i = 0; i < services.length; i++) {
