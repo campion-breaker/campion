@@ -101,6 +101,7 @@ const flip = async () => {
 
   try {
     services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
+
     clearInterval(retrieveId);
     console.log("\n");
   } catch (e) {
@@ -121,6 +122,7 @@ const flip = async () => {
   }
 
   const newState = await flipStatePrompt({ ...chosenService });
+  console.log(newState, chosenService);
 
   if (Object.keys(newState).length === 0) {
     console.log("\nCircuit flip aborted.");

@@ -1,7 +1,11 @@
 const prompt = require("prompts");
 const configDir = require("../utils/configDir");
-const { deleteWorker, deleteNamespace } = require("../workers/api/wipeCloudflare");
+const {
+  deleteWorker,
+  deleteNamespace,
+} = require("../workers/api/wipeCloudflare");
 const loadingBar = require("../utils/loadingBar");
+const fs = require("fs");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const wipeSuccessMsg = () => {
@@ -35,6 +39,8 @@ const wipe = async () => {
     await deleteNamespace(process.env.SERVICES_CONFIG_ID);
     await deleteNamespace(process.env.EVENTS_ID);
     await deleteNamespace(process.env.TRAFFIC_ID);
+    fs.rmdirSync(configDir, { recursive: true });
+    fs.unlinkSync(`${__dirname}/../../front_end/app/.env`);
     clearInterval(deleteServiceId);
     wipeSuccessMsg();
   } catch (e) {
