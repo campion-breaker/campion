@@ -27,7 +27,9 @@ export default function Events({ items }) {
               }. This was ${
                 event.MODE === "AUTO" ? "an automatic" : "a manual"
               } change.`
-            : `Circuit-breaker configuration settings were changed.`}
+            : `Circuit-breaker configuration settings were ${
+                event.METHOD === "ADD" ? "added" : "changed"
+              }.`}
         </td>
       </tr>
     );

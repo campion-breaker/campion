@@ -64,7 +64,7 @@ export default class EventsList extends React.Component {
                     </th>
                   </tr>
                 </thead>
-                <Events items={this.state.items} />
+                <Events items={this.state.items.slice(0, 10)} />
               </table>
             </div>
           </div>
