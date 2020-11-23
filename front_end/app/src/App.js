@@ -1,30 +1,70 @@
 import React from "react";
-import logo from "./logo.svg";
 import moment from "moment";
-import "./App.css";
 
 class App extends React.Component {
   state = {
-    events: [],
-    traffic: [],
+    events: {
+      isLoaded: false,
+      error: null,
+      items: [],
+    },
+    traffic: {
+      isLoaded: false,
+      error: null,
+      items: [],
+    },
   };
 
-  componentWillMount() {
-    fetch("http://localhost:7777/events").then((data) => {
-      data.json().then((events, error) => {
-        this.setState({ events });
-      });
-    });
+  componentDidMount() {
+    fetch("http://localhost:7777/events")
+      .then((data) => data.json())
+      .then(
+        (items) => {
+          this.setState({
+            events: {
+              isLoaded: true,
+              error: null,
+              items,
+            },
+          });
+        },
+        (error) => {
+          this.setState({
+            traffic: {
+              isLoaded: true,
+              error,
+              items: [],
+            },
+          });
+        }
+      );
 
-    fetch("http://localhost:7777/traffic").then((data) => {
-      data.json().then((traffic, error) => {
-        this.setState({ traffic });
-      });
-    });
+    fetch("http://localhost:7777/traffic")
+      .then((data) => data.json())
+      .then(
+        (items) => {
+          this.setState({
+            traffic: {
+              isLoaded: true,
+              error: null,
+              items,
+            },
+          });
+        },
+        (error) => {
+          this.setState({
+            traffic: {
+              isLoaded: true,
+              error,
+              items: [],
+            },
+          });
+        }
+      );
   }
 
   render() {
-    const events = this.state.events.slice(0, 10).map((event) => {
+    const events = this.state.events.items.slice(0, 10).map((event) => {
       if (event.EVENT === "STATE_CHANGE") {
         return (
           <li key={event.TIME}>
@@ -52,10 +92,9 @@ class App extends React.Component {
     return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>Number of Events: {this.state.events.length}</p>
+          <p>Number of Events: {this.state.events.items.length}</p>
           <ul>{events}</ul>
-          <p>Number of Traffic: {this.state.traffic.length}</p>
+          <p>Number of Traffic: {this.state.traffic.items.length}</p>
         </header>
       </div>
     );
