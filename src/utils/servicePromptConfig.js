@@ -7,8 +7,8 @@ const initialState = {
   MAX_LATENCY: 3000,
   NETWORK_FAILURE_THRESHOLD: 5,
   PERCENT_OF_REQUESTS: 25,
-  SERVICE: '',
-  SERVICE_NAME: '',
+  ID: '',
+  NAME: '',
   SERVICE_FAILURE_THRESHOLD: 3,
   SUCCESS_THRESHOLD: 2,
   TIMESPAN: 60,
@@ -25,17 +25,17 @@ const formatUrl = (url) => {
 const questions = (state) => [
   {
     type: 'text',
-    name: 'SERVICE',
+    name: 'ID',
     message: 'Enter the service URL: ',
-    initial: state.SERVICE || '',
+    initial: state.ID || '',
     validate: async (url) => await validateUrl(url),
     format: (url) => formatUrl(url),
   },
   {
     type: 'text',
-    name: 'SERVICE_NAME',
+    name: 'NAME',
     message: 'Enter the name of the service: ',
-    initial: state.SERVICE_NAME || '',
+    initial: state.NAME || '',
   },
   {
     type: 'number',

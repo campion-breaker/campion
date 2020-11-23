@@ -34,12 +34,12 @@ const add = async () => {
     return;
   }
 
-  const addId = loadingBar(`\nProtecting ${newState.SERVICE_NAME} `);
+  const addId = loadingBar(`\nProtecting ${newState.NAME} `);
   try {
     await update(newState);
     await logChangeEvent(buildConfigChangeKey(newState));
     clearInterval(addId);
-    addSuccessMsg(newState.SERVICE_NAME, newState.SERVICE);
+    addSuccessMsg(newState.NAME, newState.ID);
   } catch (e) {
     clearInterval(addId);
     console.log(e.message);

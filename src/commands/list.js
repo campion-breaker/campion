@@ -35,9 +35,9 @@ const list = async () => {
   for (let i = 0; i < services.length; i++) {
     const currService = services[i];
     table.push([
-      currService.SERVICE_NAME,
+      currService.NAME,
       currService.CIRCUIT_STATE,
-      process.env.SUBDOMAIN + currService.SERVICE,
+      process.env.SUBDOMAIN + currService.ID,
     ]);
   }
 

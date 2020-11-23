@@ -13,7 +13,7 @@ const deleteServiceSuccessMsg = (service) => {
 const questions = (choices) => {
   return {
     type: "select",
-    name: "SERVICE",
+    name: "ID",
     message: "Which service would you like to delete? ",
     choices,
   };
@@ -31,14 +31,14 @@ const confirm = (choice) => {
 const selectService = async (services) => {
   const choices = services.map((service) => {
     return {
-      title: service.SERVICE_NAME,
+      title: service.NAME,
       value: service,
-      description: service.SERVICE,
+      description: service.ID,
     };
   });
 
   const service = await prompt(questions(choices));
-  return service.SERVICE;
+  return service.ID;
 };
 
 const deleteService = async () => {
@@ -65,7 +65,7 @@ const deleteService = async () => {
   }
 
   const chosenService = await selectService(services);
-  const confirmation = await prompt(confirm(chosenService.SERVICE_NAME));
+  const confirmation = await prompt(confirm(chosenService.NAME));
 
   if (!confirmation.value) {
     console.log("Delete aborted.");
@@ -73,13 +73,13 @@ const deleteService = async () => {
   }
 
   const deleteServiceId = loadingBar(
-    `\nDeleting '${chosenService.SERVICE_NAME}' `
+    `\nDeleting '${chosenService.NAME}' `
   );
 
   try {
-    await deleteServiceConfig(chosenService.SERVICE);
+    await deleteServiceConfig(chosenService.ID);
     clearInterval(deleteServiceId);
-    deleteServiceSuccessMsg(chosenService.SERVICE_NAME);
+    deleteServiceSuccessMsg(chosenService.NAME);
   } catch (e) {
     clearInterval(deleteServiceId);
     console.log(e.message);

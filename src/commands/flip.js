@@ -14,7 +14,7 @@ const flipSuccessMsg = (service, newState) => {
 const questions = (choices) => {
   return {
     type: "select",
-    name: "SERVICE",
+    name: "ID",
     message: "Which service's state would you like to flip? ",
     choices,
   };
@@ -23,15 +23,15 @@ const questions = (choices) => {
 const selectService = async (services) => {
   const choices = services.map((service) => {
     return {
-      title: service.SERVICE_NAME,
+      title: service.NAME,
       value: service,
-      description: `${service.CIRCUIT_STATE} at '${service.SERVICE}`,
+      description: `${service.CIRCUIT_STATE} at '${service.ID}`,
     };
   });
 
   const chosenService = await prompt(questions(choices));
 
-  return chosenService.SERVICE;
+  return chosenService.ID;
 };
 
 const flipStatePrompt = async (state) => {
@@ -79,7 +79,7 @@ const flipStatePrompt = async (state) => {
 
 const buildEventStateChangeKey = (service, newState) => {
   const stateChangeEntry = {
-    ID: service.SERVICE,
+    ID: service.ID,
     EVENT: "STATE_CHANGE",
     TIME: Date.now(),
     OLD_STATE: service.CIRCUIT_STATE,
@@ -134,13 +134,13 @@ const flip = async () => {
   await logChangeEvent(buildEventStateChangeKey(chosenService, newState));
 
   const updateId = loadingBar(
-    `\nFlipping '${chosenService.SERVICE_NAME}' to ${newState} `
+    `\nFlipping '${chosenService.NAME}' to ${newState} `
   );
 
   try {
     await putServicesConfig(chosenService);
     clearInterval(updateId);
-    flipSuccessMsg(chosenService.SERVICE_NAME, chosenService.CIRCUIT_STATE);
+    flipSuccessMsg(chosenService.NAME, chosenService.CIRCUIT_STATE);
   } catch (e) {
     clearInterval(updateId);
     console.log(e.message);

@@ -5,7 +5,7 @@ async function handleRequest(request) {
   const requestMetrics = {
     requestReceived: Date.now(),
     circuitState: service.CIRCUIT_STATE,
-    service: service.SERVICE,
+    service: service.ID,
   };
 
   if (service === null) {
@@ -85,7 +85,7 @@ async function processRequest(service) {
     }, service.MAX_LATENCY);
   });
 
-  const fetchPromise = fetch(service.SERVICE).then(async (data) => {
+  const fetchPromise = fetch(service.ID).then(async (data) => {
     clearTimeout(timeoutId);
 
     let failure = false;
@@ -163,7 +163,7 @@ async function updateCircuitState(service, serviceId, response) {
 
 async function logEventStateChange(service, newState) {
   const stateChangeEntry = {
-    ID: service.SERVICE,
+    ID: service.ID,
     EVENT: "STATE_CHANGE",
     TIME: Date.now(),
     OLD_STATE: service.CIRCUIT_STATE,

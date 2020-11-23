@@ -15,7 +15,7 @@ const updateSuccessMsg = (service) => {
 const questions = (choices) => {
   return {
     type: "select",
-    name: "SERVICE",
+    name: "ID",
     message: "Which service would you like to update? ",
     choices,
   };
@@ -24,14 +24,14 @@ const questions = (choices) => {
 const selectService = async (services) => {
   const choices = services.map((service) => {
     return {
-      title: service.SERVICE_NAME,
+      title: service.NAME,
       value: service,
-      description: service.SERVICE,
+      description: service.ID,
     };
   });
 
   const chosenService = await prompt(questions(choices));
-  return chosenService.SERVICE;
+  return chosenService.ID;
 };
 
 const buildConfigChangeKey = (service) => {
@@ -77,13 +77,13 @@ const update = async () => {
     return;
   }
 
-  const updateId = loadingBar(`\nUpdating '${newState.SERVICE_NAME}' `);
+  const updateId = loadingBar(`\nUpdating '${newState.NAME}' `);
 
   try {
     await putServicesConfig(newState);
     await logChangeEvent(buildConfigChangeKey(newState));
     clearInterval(updateId);
-    updateSuccessMsg(newState.SERVICE_NAME);
+    updateSuccessMsg(newState.NAME);
   } catch (e) {
     clearInterval(updateId);
     console.log(e.message);

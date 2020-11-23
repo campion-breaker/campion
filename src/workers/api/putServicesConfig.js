@@ -5,7 +5,7 @@ require("dotenv").config({ path: `${configDir}/.env` });
 async function putServicesConfig(state) {
   const accountId = process.env.ACCOUNT_ID;
   const configId = process.env.SERVICES_CONFIG_ID;
-  const serviceId = state.SERVICE.replace(/\//g, "%2F");
+  const serviceId = state.ID.replace(/\//g, "%2F");
 
   const data = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/storage/kv/namespaces/${configId}/values/${serviceId}/`,
