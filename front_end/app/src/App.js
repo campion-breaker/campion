@@ -24,7 +24,7 @@ class App extends React.Component {
             events: {
               isLoaded: true,
               error: null,
-              items,
+              items: items.sort((a, b) => b.TIME - a.TIME),
             },
           });
         },
@@ -81,7 +81,7 @@ class App extends React.Component {
           <li key={event.TIME}>
             {" "}
             <strong>
-              {event.ID} - {moment(event.TIME).fromNow()}
+              {event.NAME} - {moment(event.TIME).fromNow()}
             </strong>
             : Circuit-breaker settings were changed.
           </li>
