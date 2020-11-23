@@ -11,14 +11,12 @@ const addSuccessMsg = (service, url) => {
 };
 
 const buildConfigChangeKey = (service) => {
-  const key = {
+  return {
     ...service,
     EVENT: 'CONFIG_CHANGE',
     TIME: Date.now(),
     METHOD: 'ADD',
   };
-
-  return JSON.stringify(key);
 };
 
 const add = async () => {
@@ -36,8 +34,8 @@ const add = async () => {
 
   const addId = loadingBar(`\nProtecting ${newState.NAME} `);
   try {
-    await update(newState);
     await logChangeEvent(buildConfigChangeKey(newState));
+    await update(newState);
     clearInterval(addId);
     addSuccessMsg(newState.NAME, newState.ID);
   } catch (e) {
