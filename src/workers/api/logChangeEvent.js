@@ -5,8 +5,12 @@ require("dotenv").config({ path: `${configDir}/.env` });
 const logChangeEvent = async (key) => {
   const acctId = process.env.ACCOUNT_ID;
   const eventsNamespaceId = process.env.EVENTS_ID;
+  let event = { ...key };
+  event.ID = key.ID.replace(/\//g, "%2F");
+  event = JSON.stringify(event);
+
   const data = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${acctId}/storage/kv/namespaces/${eventsNamespaceId}/values/${key}`,
+    `https://api.cloudflare.com/client/v4/accounts/${acctId}/storage/kv/namespaces/${eventsNamespaceId}/values/${event}`,
     {
       method: "PUT",
       headers: {

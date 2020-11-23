@@ -29,9 +29,9 @@ const selectService = async (services) => {
     };
   });
 
-  const chosenService = await prompt(questions(choices));
+  const selected = await prompt(questions(choices));
 
-  return chosenService.ID;
+  return selected.ID;
 };
 
 const flipStatePrompt = async (state) => {
@@ -78,30 +78,23 @@ const flipStatePrompt = async (state) => {
 };
 
 const buildEventStateChangeKey = (service, newState) => {
-  const stateChangeEntry = {
+  return {
     ID: service.ID,
+    NAME: service.NAME,
     EVENT: "STATE_CHANGE",
     TIME: Date.now(),
     OLD_STATE: service.CIRCUIT_STATE,
     NEW_STATE: newState,
     MODE: "FLIP",
   };
-
-  return JSON.stringify(stateChangeEntry);
 };
 
-const flip = async () => {
-  if (!configExists()) {
-    console.log('Config not found. Run "campion setup" to start.');
-    return;
-  }
-
+const getServices = async () => {
   let services;
   const retrieveId = loadingBar("Retrieving services ");
 
   try {
     services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
-
     clearInterval(retrieveId);
     console.log("\n");
   } catch (e) {
@@ -114,33 +107,47 @@ const flip = async () => {
     return;
   }
 
-  const chosenService = await selectService(services);
+  return services;
+};
 
-  if (Object.keys(chosenService).length === 0) {
+const flip = async () => {
+  if (!configExists()) {
+    console.log('Config not found. Run "campion setup" to start.');
+    return;
+  }
+
+  const services = await getServices();
+  const selected = await selectService(services);
+
+  if (!selected) {
     console.log("\nCircuit flip aborted.");
     return;
   }
 
-  const newState = await flipStatePrompt({ ...chosenService });
-  console.log(newState, chosenService);
+  const newState = await flipStatePrompt({ ...selected });
 
-  if (Object.keys(newState).length === 0) {
+  if (!newState) {
     console.log("\nCircuit flip aborted.");
     return;
-  } else {
-    chosenService.CIRCUIT_STATE = newState;
   }
 
-  await logChangeEvent(buildEventStateChangeKey(chosenService, newState));
+  if (selected.CIRCUIT_STATE === newState) {
+    console.log(
+      `${selected.NAME} circuit-breaker state is already ${newState}.`
+    );
+    return;
+  }
 
   const updateId = loadingBar(
-    `\nFlipping '${chosenService.NAME}' to ${newState} `
+    `\nFlipping '${selected.NAME}' to ${newState} `
   );
 
   try {
-    await putServicesConfig(chosenService);
+    await logChangeEvent(buildEventStateChangeKey(selected, newState));
+    selected.CIRCUIT_STATE = newState;
+    await putServicesConfig(selected);
     clearInterval(updateId);
-    flipSuccessMsg(chosenService.NAME, chosenService.CIRCUIT_STATE);
+    flipSuccessMsg(selected.NAME, newState);
   } catch (e) {
     clearInterval(updateId);
     console.log(e.message);
