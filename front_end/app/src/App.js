@@ -69,7 +69,7 @@ class App extends React.Component {
         return (
           <li key={event.TIME}>
             <strong>
-              {event.ID} - {moment(event.TIME).fromNow()}
+              {event.NAME} - {moment(event.TIME).fromNow()}
             </strong>
             : Circuit-breaker status changed from{" "}
             {event.OLD_STATE.toLowerCase()} to {event.NEW_STATE.toLowerCase()}{" "}

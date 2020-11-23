@@ -164,6 +164,7 @@ async function updateCircuitState(service, serviceId, response) {
 async function logEventStateChange(service, newState) {
   const stateChangeEntry = {
     ID: service.ID,
+    NAME: service.NAME,
     EVENT: "STATE_CHANGE",
     TIME: Date.now(),
     OLD_STATE: service.CIRCUIT_STATE,
