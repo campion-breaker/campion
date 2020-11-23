@@ -40,7 +40,6 @@ const wipe = async () => {
     await deleteNamespace(process.env.EVENTS_ID);
     await deleteNamespace(process.env.TRAFFIC_ID);
     fs.rmdirSync(configDir, { recursive: true });
-    fs.unlinkSync(`${__dirname}/../../front_end/app/.env`);
     clearInterval(deleteServiceId);
     wipeSuccessMsg();
   } catch (e) {

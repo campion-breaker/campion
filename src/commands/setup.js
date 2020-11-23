@@ -42,10 +42,6 @@ const writeToFile = ({ apiKey, email }) => {
   clearExistingIds();
 
   fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
-  fs.writeFileSync(
-    `${__dirname}/../../front_end/app/.env`,
-    `REACT_APP_APIKEY=${apiKey}\nREACT_APP_EMAIL=${email}`
-  );
 };
 
 const questions = (apiKey, email) => [
