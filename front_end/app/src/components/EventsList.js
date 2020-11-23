@@ -1,5 +1,5 @@
 import React from "react";
-import moment from "moment";
+import Events from "./Events";
 
 export default class EventsList extends React.Component {
   state = {
@@ -14,51 +14,22 @@ export default class EventsList extends React.Component {
       .then(
         (items) => {
           this.setState({
-            events: {
-              isLoaded: true,
-              error: null,
-              items: items.sort((a, b) => b.TIME - a.TIME),
-            },
+            isLoaded: true,
+            error: null,
+            items: items.sort((a, b) => b.TIME - a.TIME),
           });
         },
         (error) => {
           this.setState({
-            traffic: {
-              isLoaded: true,
-              error,
-              items: [],
-            },
+            isLoaded: true,
+            error,
+            items: [],
           });
         }
       );
   }
 
   render() {
-    const events = this.state.items.slice(0, 10).map((event) => {
-      if (event.EVENT === "STATE_CHANGE") {
-        return (
-          <li key={event.TIME}>
-            <strong>
-              {event.NAME} - {moment(event.TIME).fromNow()}
-            </strong>
-            : Circuit-breaker status changed from{" "}
-            {event.OLD_STATE.toLowerCase()} to {event.NEW_STATE.toLowerCase()}{" "}
-            {event.MODE === "AUTO" ? "automatically." : "by user."}
-          </li>
-        );
-      } else {
-        return (
-          <li key={event.TIME}>
-            {" "}
-            <strong>
-              {event.NAME} - {moment(event.TIME).fromNow()}
-            </strong>
-            : Circuit-breaker settings were changed.
-          </li>
-        );
-      }
-    });
-
     return (
       <div className="flex flex-col">
         <div className="-my-2 sm:-mx-6 lg:-mx-8">
@@ -93,27 +64,7 @@ export default class EventsList extends React.Component {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        { moment(Date.now()).fromNow() }
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        ak
-                      </div>
-                      <div className="text-sm text-gray-500">https://arthurk.dev/</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500">Circuit-Breaker Status</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      User flipped circuit-breaker from half-open to open. This was a manual state change.
-                    </td>
-                  </tr>
-                </tbody>
+                <Events items={this.state.items} />
               </table>
             </div>
           </div>

@@ -13,20 +13,16 @@ export default class TrafficList extends React.Component {
       .then(
         (items) => {
           this.setState({
-            traffic: {
-              isLoaded: true,
-              error: null,
-              items,
-            },
+            isLoaded: true,
+            error: null,
+            items,
           });
         },
         (error) => {
           this.setState({
-            traffic: {
-              isLoaded: true,
-              error,
-              items: [],
-            },
+            isLoaded: true,
+            error,
+            items: [],
           });
         }
       );
