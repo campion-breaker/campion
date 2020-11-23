@@ -35,14 +35,12 @@ const selectService = async (services) => {
 };
 
 const buildConfigChangeKey = (service) => {
-  const key = {
+  return {
     ...service,
     EVENT: "CONFIG_CHANGE",
     TIME: Date.now(),
     METHOD: "UPDATE",
   };
-
-  return JSON.stringify(key);
 };
 
 const update = async () => {
@@ -72,7 +70,7 @@ const update = async () => {
 
   const newState = await servicePromptConfig(chosenService);
 
-  if (!(Object.keys(newState).length === 10)) {
+  if (!newState || !(Object.keys(newState).length === 10)) {
     console.log("\nService update aborted.");
     return;
   }
@@ -80,8 +78,8 @@ const update = async () => {
   const updateId = loadingBar(`\nUpdating '${newState.NAME}' `);
 
   try {
-    await putServicesConfig(newState);
     await logChangeEvent(buildConfigChangeKey(newState));
+    await putServicesConfig(newState);
     clearInterval(updateId);
     updateSuccessMsg(newState.NAME);
   } catch (e) {
