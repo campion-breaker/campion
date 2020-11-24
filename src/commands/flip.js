@@ -90,27 +90,6 @@ const buildEventStateChangeKey = (service, newState) => {
   };
 };
 
-const getServices = async () => {
-  let services;
-  const retrieveId = loadingBar("Retrieving services ");
-
-  try {
-    services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
-    clearInterval(retrieveId);
-    console.log("\n");
-  } catch (e) {
-    clearInterval(retrieveId);
-    console.log(e.message);
-  }
-
-  if (services.length === 0) {
-    console.log('\nNo services found. Run "campion add" to add a service.');
-    return;
-  }
-
-  return services;
-};
-
 const flip = async () => {
   if (!configExists()) {
     console.log('Config not found. Run "campion setup" to start.');
