@@ -82,11 +82,15 @@ const deleteService = async () => {
   const chosenServiceEvents = events.filter((event) => 
     event.includes(chosenService.ID)
   );
+  const traffic = await getAllKeys('TRAFFIC_ID', true);
+  const chosenServiceTraffic = traffic.filter((obj) =>
+    obj.includes(chosenService.ID)
+  );
 
   try {
-    console.log(chosenServiceEvents)
     await deleteAllKeys('EVENTS_ID', chosenServiceEvents);
-    // await deleteServiceConfig(chosenService.ID);
+    await deleteAllKeys('TRAFFIC_ID', chosenServiceTraffic);
+    await deleteServiceConfig(chosenService.ID);
     clearInterval(deleteServiceId);
     deleteServiceSuccessMsg(chosenService.NAME);
   } catch (e) {
