@@ -6,6 +6,7 @@ const loadingBar = require("../utils/loadingBar");
 const putServicesConfig = require("../workers/api/putServicesConfig");
 const servicePromptConfig = require("../utils/servicePromptConfig");
 const logChangeEvent = require("../workers/api/logChangeEvent");
+const getListOfServices = require("../utils/getListOfServices");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const updateSuccessMsg = (service) => {
@@ -49,29 +50,23 @@ const update = async () => {
     return;
   }
 
-  let services;
-  const retrieveId = loadingBar("Retrieving services ");
+  const services = await getListOfServices();
 
-  try {
-    services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
-    clearInterval(retrieveId);
-    console.log("\n");
-  } catch (e) {
-    clearInterval(retrieveId);
-    console.log(e.message);
-  }
-
-  if (services.length === 0) {
-    console.log('\nNo services found. Run "campion add" to add a service.');
+  if (!services) {
     return;
   }
 
   const chosenService = await selectService(services);
 
+  if (!chosenService) {
+    console.log('Update aborted');
+    return;
+  }
+
   const newState = await servicePromptConfig(chosenService);
 
   if (!newState || !(Object.keys(newState).length === 10)) {
-    console.log("\nService update aborted.");
+    console.log("\nUpdate aborted.");
     return;
   }
 

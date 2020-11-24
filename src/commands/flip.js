@@ -5,6 +5,7 @@ const configExists = require("../utils/validateConfig");
 const loadingBar = require("../utils/loadingBar");
 const putServicesConfig = require("../workers/api/putServicesConfig");
 const logChangeEvent = require("../workers/api/logChangeEvent");
+const getListOfServices = require("../utils/getListOfServices");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const flipSuccessMsg = (service, newState) => {
@@ -116,7 +117,12 @@ const flip = async () => {
     return;
   }
 
-  const services = await getServices();
+  const services = await getListOfServices();
+
+  if (!services) {
+    return;
+  }
+
   const selected = await selectService(services);
 
   if (!selected) {

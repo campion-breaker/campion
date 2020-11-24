@@ -1,8 +1,7 @@
-const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
 const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const Table = require("cli-table3");
-const loadingBar = require("../utils/loadingBar");
+const getListOfServices = require("../utils/getListOfServices");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const list = async () => {
@@ -11,20 +10,9 @@ const list = async () => {
     return;
   }
 
-  let services;
-  const retrieveId = loadingBar("Retrieving services ");
+  const services = await getListOfServices();
 
-  try {
-    services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
-    clearInterval(retrieveId);
-    console.log("\n");
-  } catch (e) {
-    clearInterval(retrieveId);
-    console.log(e.message);
-  }
-
-  if (services.length === 0) {
-    console.log("\nNo services found.");
+  if (!services) {
     return;
   }
 

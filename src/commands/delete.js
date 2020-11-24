@@ -3,7 +3,7 @@ const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const loadingBar = require("../utils/loadingBar");
 const deleteServiceConfig = require("../workers/api/deleteServiceConfig");
-const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
+const getListOfServices = require("../utils/getListOfServices");
 const getAllKeys = require("../workers/api/getAllKeys");
 const deleteAllKeys = require("../workers/api/deleteAllKeys");
 require("dotenv").config({ path: `${configDir}/.env` });
@@ -43,56 +43,51 @@ const selectService = async (services) => {
   return service.ID;
 };
 
+
 const deleteService = async () => {
   if (!configExists()) {
     console.log('Config not found. Run "campion setup" to start.');
     return;
   }
 
-  let services;
-  const retrieveId = loadingBar("Retrieving services ");
+  const services = await getListOfServices();
 
-  try {
-    services = await getAllServicesConfigs("SERVICES_CONFIG_ID");
-    clearInterval(retrieveId);
-    console.log("\n");
-  } catch (e) {
-    clearInterval(retrieveId);
-    console.log(e.message);
-  }
-
-  if (services.length === 0) {
-    console.log("\nNo services found.");
+  if (!services) {
     return;
   }
 
-  const chosenService = await selectService(services);
-  const confirmation = await prompt(confirm(chosenService.NAME));
+  const selected = await selectService(services);
 
-  if (!confirmation.value) {
+  if (!selected) {
+    console.log("Delete aborted.");
+    return;
+  }
+
+  const confirmation = await prompt(confirm(selected.NAME));
+
+  if (!confirmation) {
     console.log("Delete aborted.");
     return;
   }
 
   const deleteServiceId = loadingBar(
-    `\nDeleting '${chosenService.NAME}' `
-  );
-
-  const events = await getAllKeys('EVENTS_ID', true);
-  const chosenServiceEvents = events.filter((event) => 
-    event.includes(chosenService.ID)
-  );
-  const traffic = await getAllKeys('TRAFFIC_ID', true);
-  const chosenServiceTraffic = traffic.filter((obj) =>
-    obj.includes(chosenService.ID)
+    `\nDeleting '${selected.NAME}' `
   );
 
   try {
-    await deleteAllKeys('EVENTS_ID', chosenServiceEvents);
-    await deleteAllKeys('TRAFFIC_ID', chosenServiceTraffic);
-    await deleteServiceConfig(chosenService.ID);
+    const events = await getAllKeys('EVENTS_ID', true);
+    const selectedEvents = events.filter((event) => 
+      event.includes(selected.ID)
+    );
+    const traffic = await getAllKeys('TRAFFIC_ID', true);
+    const selectedTraffic = traffic.filter((obj) =>
+      obj.includes(selected.ID)
+    );
+    await deleteAllKeys('EVENTS_ID', selectedEvents);
+    await deleteAllKeys('TRAFFIC_ID', selectedTraffic);
+    await deleteServiceConfig(selected.ID);
     clearInterval(deleteServiceId);
-    deleteServiceSuccessMsg(chosenService.NAME);
+    deleteServiceSuccessMsg(selected.NAME);
   } catch (e) {
     clearInterval(deleteServiceId);
     console.log(e.message);
