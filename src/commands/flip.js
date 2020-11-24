@@ -84,7 +84,7 @@ const buildEventStateChangeKey = (service, newState) => {
     EVENT: "STATE_CHANGE",
     TIME: Date.now(),
     OLD_STATE: service.CIRCUIT_STATE,
-    NEW_STATE: newState,
+    CIRCUIT_STATE: newState,
     MODE: "FLIP",
   };
 };

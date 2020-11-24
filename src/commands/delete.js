@@ -4,6 +4,8 @@ const configExists = require("../utils/validateConfig");
 const loadingBar = require("../utils/loadingBar");
 const deleteServiceConfig = require("../workers/api/deleteServiceConfig");
 const getAllServicesConfigs = require("../utils/getAllServicesConfigs");
+const getAllKeys = require("../workers/api/getAllKeys");
+const deleteAllKeys = require("../workers/api/deleteAllKeys");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const deleteServiceSuccessMsg = (service) => {
@@ -76,8 +78,15 @@ const deleteService = async () => {
     `\nDeleting '${chosenService.NAME}' `
   );
 
+  const events = await getAllKeys('EVENTS_ID', true);
+  const chosenServiceEvents = events.filter((event) => 
+    event.includes(chosenService.ID)
+  );
+
   try {
-    await deleteServiceConfig(chosenService.ID);
+    console.log(chosenServiceEvents)
+    await deleteAllKeys('EVENTS_ID', chosenServiceEvents);
+    // await deleteServiceConfig(chosenService.ID);
     clearInterval(deleteServiceId);
     deleteServiceSuccessMsg(chosenService.NAME);
   } catch (e) {

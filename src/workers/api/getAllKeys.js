@@ -2,7 +2,7 @@ const fetch = require("node-fetch");
 const configDir = require("../../utils/configDir");
 require("dotenv").config({ path: `${configDir}/.env` });
 
-async function getAllKeys(namespace) {
+async function getAllKeys(namespace, unparsed=false) {
   const acctId = process.env.ACCOUNT_ID;
   const namespaceId = process.env[namespace];
 
@@ -19,9 +19,11 @@ async function getAllKeys(namespace) {
   );
 
   if (data.ok) {
+
     const body = await data.json();
-    if (namespace === "SERVICES_CONFIG_ID") {
-      return body.result.map((key) => key.name);
+  
+    if (unparsed || namespace === "SERVICES_CONFIG_ID") {
+      return body.result.map(key => key.name);
     }
 
     return body.result.map((key) => JSON.parse(key.name));

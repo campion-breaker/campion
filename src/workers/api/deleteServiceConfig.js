@@ -20,7 +20,7 @@ async function deleteServiceConfig(id) {
   );
 
   if (!data.ok) {
-    throw new Error(JSON.stringify(data)); //`\nFailed to update 'SERVICES_CONFIG'. Please try again.`);
+    throw new Error(JSON.stringify(data));
   }
 
   const body = await data.json();
