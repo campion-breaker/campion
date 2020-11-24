@@ -36,6 +36,6 @@ app.get('/endpoints', async (req, res) => {
 });
 
 app.listen(port, host, () => {
-  console.log(`\nServer is now running at http://${host}:${port}.`);
+  console.log(`\nCampion stats are now available at http://${host}:${port}.`);
   console.log('Control + C to quit.');
 });
