@@ -1,12 +1,7 @@
 async function handleRequest(request) {
   const serviceId = getServiceId(request.url);
   const service = await getServiceObj(serviceId);
-
-  const requestMetrics = {
-    requestReceived: Date.now(),
-    circuitState: service.CIRCUIT_STATE,
-    ID: service.ID,
-  };
+  const receivedTime = Date.now();
 
   if (service === null) {
     return new Response("Circuit breaker doesn't exist", { status: 404 });
@@ -14,7 +9,7 @@ async function handleRequest(request) {
 
   if (service.CIRCUIT_STATE === 'FORCED-OPEN') {
     requestMetrics.circuitState = 'FORCED-OPEN';
-    await logRequestMetrics(requestMetrics);
+    await logRequestMetrics(receivedTime, service);
     return new Response(
       'Circuit has been manually force-opened. Adjust in Campion CLI/GUI.',
       { status: 504 }
@@ -26,24 +21,22 @@ async function handleRequest(request) {
 
     if (service.CIRCUIT_STATE === 'OPEN') {
       requestMetrics.circuitState = 'OPEN';
-      await logRequestMetrics(requestMetrics);
+      await logRequestMetrics(receivedTime, service);
       return new Response('Circuit is open', { status: 504 });
     }
   }
 
   if (service.CIRCUIT_STATE === 'HALF-OPEN' && !canRequestProceed(service)) {
     requestMetrics.circuitState = 'HALF_OPEN';
-    await logRequestMetrics(requestMetrics);
+    await logRequestMetrics(receivedTime, service);
     return new Response('Circuit is half-open', { status: 504 });
   }
 
-  requestMetrics.serviceRequested = Date.now();
   const response = await processRequest(service);
-  requestMetrics.requestProcessed = Date.now();
-  requestMetrics.requestStatus = response.status;
+  const responseTime = Date.now();
 
   await updateCircuitState(service, serviceId, response);
-  await logRequestMetrics(requestMetrics);
+  await logRequestMetrics(receivedTime, service, responseTime, response.status);
 
   return new Response(response.body, {
     status: response.status,
@@ -201,16 +194,13 @@ async function requestLogCount(serviceId) {
   return { serviceFailures, networkFailures, successes };
 }
 
-async function logRequestMetrics(metrics) {
-  metrics.latency =
-    Number(metrics.requestProcessed) - Number(metrics.serviceRequested);
-
+async function logRequestMetrics(receivedTime, service, responseTime, status) {
   const key = JSON.stringify({
-    ID: metrics.ID,
-    STATUS: metrics.requestStatus || '',
-    STATE: metrics.circuitState,
-    TIME: metrics.requestReceived,
-    LATENCY: metrics.latency || '',
+    ID: service.ID,
+    STATUS: status || '',
+    STATE: service.CIRCUIT_STATE,
+    TIME: receivedTime,
+    LATENCY: responseTime - receivedTime || '',
   });
 
   await TRAFFIC.put(key, '');
