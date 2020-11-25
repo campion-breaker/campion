@@ -8,7 +8,6 @@ async function handleRequest(request) {
   }
 
   if (service.CIRCUIT_STATE === 'FORCED-OPEN') {
-    requestMetrics.circuitState = 'FORCED-OPEN';
     await logRequestMetrics(receivedTime, service);
     return new Response(
       'Circuit has been manually force-opened. Adjust in Campion CLI/GUI.',
@@ -20,14 +19,12 @@ async function handleRequest(request) {
     await setStateWhenOpen(service, serviceId);
 
     if (service.CIRCUIT_STATE === 'OPEN') {
-      requestMetrics.circuitState = 'OPEN';
       await logRequestMetrics(receivedTime, service);
       return new Response('Circuit is open', { status: 504 });
     }
   }
 
   if (service.CIRCUIT_STATE === 'HALF-OPEN' && !canRequestProceed(service)) {
-    requestMetrics.circuitState = 'HALF_OPEN';
     await logRequestMetrics(receivedTime, service);
     return new Response('Circuit is half-open', { status: 504 });
   }
