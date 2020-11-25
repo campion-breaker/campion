@@ -122,13 +122,12 @@ const flip = async () => {
     return;
   }
 
-  const updateId = loadingBar(
-    `\nFlipping '${selected.NAME}' to ${newState} `
-  );
+  const updateId = loadingBar(`\nFlipping '${selected.NAME}' to ${newState} `);
 
   try {
     await logChangeEvent(buildEventStateChangeKey(selected, newState));
     selected.CIRCUIT_STATE = newState;
+    selected.UPDATED_TIME = Date.now();
     await putServicesConfig(selected);
     clearInterval(updateId);
     flipSuccessMsg(selected.NAME, newState);

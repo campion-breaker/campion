@@ -27,5 +27,8 @@
     "open": "^7.3.0",
     "prettier": "^2.1.2",
     "prompts": "^2.4.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.14.0"
   }
 }
