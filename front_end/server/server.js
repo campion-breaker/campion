@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const getAllKeys = require(`${__dirname}/../../src/workers/api/getAllKeys`);
 const getAllServicesConfigs = require(`${__dirname}/../../src/utils/getAllServicesConfigs`);
+const configDir = require('../../src/utils/configDir');
+require('dotenv').config({ path: `${configDir}/.env` });
 const app = express();
 const host = 'localhost';
 const port = 7777;
@@ -33,6 +35,11 @@ app.get('/endpoints', async (req, res) => {
   const endpoints = await getAllServicesConfigs();
   res.set('Content-Type', 'application/json');
   res.send(endpoints);
+});
+
+app.get('/subdomain', (req, res) => {
+  res.set('Content-Type', 'application/json');
+  res.send(JSON.stringify(process.env.SUBDOMAIN));
 });
 
 app.listen(port, host, () => {
