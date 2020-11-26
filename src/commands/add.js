@@ -35,6 +35,7 @@ const add = async () => {
   const addId = loadingBar(`\nProtecting ${newState.NAME} `);
   try {
     await logChangeEvent(buildConfigChangeKey(newState));
+    newState.UPDATED_TIME = Date.now();
     await update(newState);
     clearInterval(addId);
     addSuccessMsg(newState.NAME, newState.ID);
