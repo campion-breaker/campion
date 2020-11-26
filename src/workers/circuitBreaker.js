@@ -110,7 +110,7 @@ async function setStateWhenClosed(service, serviceId) {
 
 async function setStateWhenOpen(service, serviceId) {
   const now = Date.now();
-  const oldDate = Number(service.UPDATED_TIME);
+  const oldDate = service.UPDATED_TIME;
   const differenceInSecs = (now - oldDate) / 1000;
 
   if (differenceInSecs >= service.ERROR_TIMEOUT) {
@@ -168,7 +168,7 @@ async function logEventStateChange(service, newState) {
 async function flipCircuitState(serviceId, service, newState) {
   await logEventStateChange(service, newState);
   service.CIRCUIT_STATE = newState;
-  service.UPDATED_TIME = Date.now().toString();
+  service.UPDATED_TIME = Date.now();
   await SERVICES_CONFIG.put(serviceId, JSON.stringify(service));
 }
 
