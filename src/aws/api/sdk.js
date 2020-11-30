@@ -9,12 +9,12 @@ AWS.config.update({
 });
 
 const iam = new AWS.IAM();
-const dynamodb = new AWS.DynamoDB();
+const ddb = new AWS.DynamoDB();
 const lambda = new AWS.Lambda();
 
 module.exports = {
   iam, 
-  dynamodb,
+  ddb,
   lambda,
 };
 
