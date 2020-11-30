@@ -5,6 +5,7 @@
   "main": "campionApiTesting.js",
   "bin": {
     "campion": "bin/campion.js",
+    "campionaws": "bin/campionaws.js",
     "start_server": "front_end/server/server.js"
   },
   "scripts": {
@@ -17,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.799.0",
     "cli-table3": "^0.6.0",
     "commander": "^6.2.0",
     "cors": "^2.8.5",
