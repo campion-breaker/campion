@@ -1,15 +1,14 @@
-const getAccountId = require("../workers/api/getAccountId");
-const createNamespace = require("../workers/api/createNamespace");
-const createWorkerWithKVBinding = require("../workers/api/createWorkerWithKVBinding");
 const fs = require("fs");
 const prompt = require("prompts");
-const absolutePath = require("../utils/configDir");
-const loadingBar = require("../utils/loadingBar");
-const getWorkersDevSubdomain = require("../workers/api/getWorkersDevSubdomain");
+const configDir = require("../utils/configDir");
+const loadingBar = require("../../cloudflare/utils/loadingBar");
+require("dotenv").config({ path: `${configDir}/.env` });
+const createRole = require("../api/iam/createRole");
+const attachRolePolicy = require("../api/iam/attachRolePolicy");
 
 const createHiddenCampionDir = () => {
-  if (!fs.existsSync(absolutePath)) {
-    fs.mkdirSync(absolutePath);
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir);
   }
 };
 
@@ -23,69 +22,75 @@ const configGoodbye = () => {
   );
 };
 
-const promptUser = async (apiKey, email) =>
-  await prompt(questions(apiKey, email));
+const promptUser = async (accessKeyId, secretAccessKey) =>
+  await prompt(questions(accessKeyId, secretAccessKey));
 
 const clearExistingIds = () => {
-  process.env.ACCOUNT_ID = "";
-  process.env.TRAFFIC_ID = "";
-  process.env.EVENTS_ID = "";
-  process.env.REQUEST_LOG_ID = "";
-  process.env.SERVICES_CONFIG_ID = "";
-  process.env.SUBDOMAIN = "";
+  // process.env.ACCOUNT_ID = "";
+  // process.env.TRAFFIC_ID = "";
+  // process.env.EVENTS_ID = "";
+  // process.env.REQUEST_LOG_ID = "";
+  // process.env.SERVICES_CONFIG_ID = "";
+  // process.env.SUBDOMAIN = "";
 };
 
-const writeToFile = ({ apiKey, email }) => {
-  process.env.APIKEY = apiKey;
-  process.env.EMAIL = email;
+const writeToFile = ({ accessKeyId, secretAccessKey }) => {
+  process.env.AWS_ACCESS_KEY_ID = accessKeyId;
+  process.env.AWS_SECRET_KEY = secretAccessKey;
 
   clearExistingIds();
 
-  fs.writeFileSync(`${absolutePath}/.env`, `APIKEY=${apiKey}\nEMAIL=${email}`);
+  fs.writeFileSync(
+    `${configDir}/.env`, 
+    `AWS_ACCESS_KEY_ID=${accessKeyId}\nAWS_SECRET_KEY=${secretAccessKey}`
+  );
 };
 
-const questions = (apiKey, email) => [
+const questions = (accessKeyId, secretAccessKey) => [
   {
     type: "text",
-    name: "email",
-    message: "Enter the email associated with your AWS account:",
-    initial: email || "",
+    name: "accessKeyId",
+    message: "Enter AWS Access Key:",
+    initial: accessKeyId || "",
   },
   {
     type: "text",
-    name: "apiKey",
-    message: "Enter your AWS IAM API Key:",
-    initial: apiKey || "",
+    name: "secretAccessKey",
+    message: "Enter your secret access key:",
+    initial: secretAccessKey || "",
   },
 ];
 
 const deploy = async () => {
   const deployId = loadingBar("Deploying ");
   try {
-    await getAccountId();
-    await createNamespace();
-    await createWorkerWithKVBinding();
-    await getWorkersDevSubdomain();
+    await createRole('campion');
+    await attachRolePolicy('arn:aws:iam::aws:policy/AWSLambdaFullAccess', 'campion');
+    await attachRolePolicy('arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess', 'campion');
+    await attachRolePolicy('arn:aws:iam::aws:policy/CloudFrontFullAccess', 'campion')
+
     clearInterval(deployId);
     configGoodbye();
   } catch (e) {
     clearInterval(deployId);
-    console.log(e.message);
+    console.log(`\n${e.message}`);
   }
 };
 
 const setup = async () => {
   createHiddenCampionDir();
 
-  const apiKey = process.env.APIKEY;
-  const email = process.env.EMAIL;
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_KEY;
 
   configMsg();
 
   const userInput =
-    apiKey && email ? await promptUser(apiKey, email) : await promptUser();
+    accessKeyId && secretAccessKey 
+      ? await promptUser(accessKeyId, secretAccessKey) 
+      : await promptUser();
 
-  if (userInput.apiKey && userInput.email) {
+  if (userInput.accessKeyId && userInput.secretAccessKey) {
     writeToFile(userInput);
     await deploy();
     return;
