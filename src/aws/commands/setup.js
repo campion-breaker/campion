@@ -5,6 +5,8 @@ const loadingBar = require("../../cloudflare/utils/loadingBar");
 require("dotenv").config({ path: `${configDir}/.env` });
 const createRole = require("../api/iam/createRole");
 const attachRolePolicy = require("../api/iam/attachRolePolicy");
+const writeToEnv = require("../utils/writeToEnv");
+const createFunction = require("../api/lambda/createFunction");
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -64,10 +66,13 @@ const questions = (accessKeyId, secretAccessKey) => [
 const deploy = async () => {
   const deployId = loadingBar("Deploying ");
   try {
-    await createRole('campion');
-    await attachRolePolicy('arn:aws:iam::aws:policy/AWSLambdaFullAccess', 'campion');
-    await attachRolePolicy('arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess', 'campion');
-    await attachRolePolicy('arn:aws:iam::aws:policy/CloudFrontFullAccess', 'campion')
+    await createRole('campion').then(async data => {
+      writeToEnv('ROLE_ARN', data.Role.Arn)
+      await attachRolePolicy('arn:aws:iam::aws:policy/AWSLambdaFullAccess', 'campion');
+      await attachRolePolicy('arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess', 'campion');
+      await attachRolePolicy('arn:aws:iam::aws:policy/CloudFrontFullAccess', 'campion')
+      await createFunction('campion3');
+    });
 
     clearInterval(deployId);
     configGoodbye();
