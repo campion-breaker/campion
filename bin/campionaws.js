@@ -10,11 +10,11 @@ program
   .description("Configure Campion with AWS Email and IAM API Key")
   .action(() => require("../src/aws/commands/setup")());
 
-// program
-//   .command("a")
-//   .alias("add")
-//   .description("Protect a new endpoint")
-//   .action(() => require("../src/aws/commands/add")());
+program
+  .command("a")
+  .alias("add")
+  .description("Protect a new endpoint")
+  .action(() => require("../src/aws/commands/add")());
 
 // program
 //   .command("l")
