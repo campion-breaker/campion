@@ -22,11 +22,11 @@ program
 //   .description("List all protected services")
 //   .action(() => require("../src/aws/commands/list")());
 
-// program
-//   .command("u")
-//   .alias("update")
-//   .description("Update the config parameters for a single endpoint")
-//   .action(() => require("../src/aws/commands/update")());
+program
+  .command("u")
+  .alias("update")
+  .description("Update the config parameters for a single endpoint")
+  .action(() => require("../src/aws/commands/update")());
 
 // program
 //   .command("d")
