@@ -1,11 +1,10 @@
 const prompt = require("prompts");
 const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
-const loadingBar = require("../utils/loadingBar");
-const putServicesConfig = require("../api/putServicesConfig");
-const servicePromptConfig = require("../utils/servicePromptConfig");
-const logChangeEvent = require("../api/logChangeEvent");
-const getListOfServices = require("../utils/getListOfServices");
+const loadingBar = require("../../cloudflare/utils/loadingBar");
+const putToTable = require("../api/dynamoDB/putToTable");
+const servicePromptConfig = require("../../cloudflare/utils/servicePromptConfig");
+const getFromTable = require("../api/dynamoDB/getFromTable");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const updateSuccessMsg = (service) => {
@@ -49,7 +48,7 @@ const update = async () => {
     return;
   }
 
-  const services = await getListOfServices();
+  const services = await getFromTable("SERVICES_CONFIG");
 
   if (!services) {
     return;
@@ -72,8 +71,8 @@ const update = async () => {
   const updateId = loadingBar(`\nUpdating '${newState.NAME}' `);
 
   try {
-    await logChangeEvent(buildConfigChangeKey(newState));
-    await putServicesConfig(newState);
+    await putToTable("EVENTS", buildConfigChangeKey(newState));
+    await putToTable("SERVICES_CONFIG", newState);
     clearInterval(updateId);
     updateSuccessMsg(newState.NAME);
   } catch (e) {
