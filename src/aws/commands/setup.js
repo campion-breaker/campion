@@ -8,6 +8,7 @@ const attachRolePolicy = require('../api/iam/attachRolePolicy');
 const writeToEnv = require('../utils/writeToEnv');
 const createFunction = require('../api/lambda/createFunction');
 const createTable = require('../api/dynamoDB/createTable');
+const createCloudFront = require('../api/cloudFront/createCloudFront');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -81,6 +82,7 @@ const deploy = async () => {
         setTimeout(async () => {
           const data = await createFunction('campion');
           writeToEnv('AWS_LAMBDA_ARN', data.FunctionArn);
+          await createCloudFront();
           await createTable('SERVICES_CONFIG');
           await createTable('REQUEST_LOG');
           await createTable('EVENTS');
