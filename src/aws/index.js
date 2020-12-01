@@ -2,7 +2,8 @@ const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient();
 const https = require('https');
 const url = require('url');
-const getIdFromUrl = (request) => request.Records ? request.Records[0].cf.request.uri.slice(12) : '';
+const getIdFromUrl = (request) =>
+  request.Records ? request.Records[0].cf.request.uri.slice(12) : '';
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
@@ -10,47 +11,6 @@ async function handleRequest(request) {
   const receivedTime = Date.now();
 
   if (!service || service.statusCode === 500) {
-    return newResponse("Circuit breaker doesn't exist", 404);
-  }
-
-  if (service.CIRCUIT_STATE === 'FORCED-OPEN') {
-    await logRequestMetrics(receivedTime, service);
-    return newResponse(
-      'Circuit has been manually force-opened. Adjust in Campion CLI/GUI.',
-      504
-    );
-  }
-
-  if (service.CIRCUIT_STATE === 'OPEN') {
-    await setStateWhenOpen(service, serviceId);
-    if (service.CIRCUIT_STATE === 'OPEN') {
-      await logRequestMetrics(receivedTime, service);
-      return newResponse('Circuit is open', 504);
-    }
-  }
-
-  if (service.CIRCUIT_STATE === 'HALF-OPEN' && !canRequestProceed(service)) {
-    await logRequestMetrics(receivedTime, service);
-    return newResponse('Circuit is half-open', 504);
-  }
-
-  const response = await processRequest(service);
-  console.log('response', response);
-  const responseTime = Date.now();
-
-  await updateCircuitState(service, serviceId, response);
-  await logRequestMetrics(receivedTime, service, responseTime, response.status);
-
-  return newResponse(response.body, response.status, response.headers);
-}
-
-async function handleRequest(request) {
-  const getIdFromUrl = (request) => request.Records[0].cf.request.uri.slice(12);
-  const serviceId = getIdFromUrl(request);
-  const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
-  const receivedTime = Date.now();
-
-  if (!service) {
     return newResponse("Circuit breaker doesn't exist", 404);
   }
 
@@ -173,7 +133,7 @@ async function dbFailureRead(tableName) {
   }
 }
 
-const newResponse = (body='', status=200, headers={}) => {
+const newResponse = (body = '', status = 200, headers = {}) => {
   return {
     status,
     headers,
@@ -369,4 +329,3 @@ exports.handler = async (event, context, callback) => {
 
   return callback(null, response);
 };
-
