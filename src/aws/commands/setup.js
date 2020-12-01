@@ -81,7 +81,7 @@ const deploy = async () => {
       await new Promise(async (resolve) => {
         setTimeout(async () => {
           const data = await createFunction('campion');
-          writeToEnv('AWS_LAMBDA_ARN', data.FunctionArn);
+          writeToEnv('AWS_LAMBDA_ARN', data.FunctionArn + `:${data.Version}`);
           await createCloudFront();
           await createTable('SERVICES_CONFIG');
           await createTable('REQUEST_LOG');
