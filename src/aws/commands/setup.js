@@ -79,7 +79,8 @@ const deploy = async () => {
 
       await new Promise(async (resolve) => {
         setTimeout(async () => {
-          await createFunction('campion');
+          const data = await createFunction('campion');
+          writeToEnv('AWS_LAMBDA_ARN', data.FunctionArn);
           await createTable('SERVICES_CONFIG');
           await createTable('REQUEST_LOG');
           await createTable('EVENTS');
