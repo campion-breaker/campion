@@ -1,6 +1,6 @@
-const configDir = require("./configDir");
-const fs = require("fs");
-require("dotenv").config({ path: `${configDir}/.env` });
+const configDir = require('./configDir');
+const fs = require('fs');
+require('dotenv').config({ path: `${configDir}/.env` });
 
 const writeToEnv = (name, id) => {
   process.env[name] = id;
@@ -8,4 +8,3 @@ const writeToEnv = (name, id) => {
 };
 
 module.exports = writeToEnv;
-
