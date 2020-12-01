@@ -1,7 +1,7 @@
 const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const Table = require("cli-table3");
-const getListOfServices = require("../utils/getListOfServices");
+const getFromTable = require("../api/dynamoDB/getFromTable");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const list = async () => {
@@ -10,7 +10,7 @@ const list = async () => {
     return;
   }
 
-  const services = await getListOfServices();
+  const services = await getFromTable("SERVICES_CONFIG");
 
   if (!services) {
     return;
@@ -25,7 +25,7 @@ const list = async () => {
     table.push([
       currService.NAME,
       currService.CIRCUIT_STATE,
-      process.env.SUBDOMAIN + currService.ID,
+      `https://${process.env.AWS_DOMAIN_NAME}/service?id=${currService.ID}`,
     ]);
   }
 
