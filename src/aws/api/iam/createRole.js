@@ -2,14 +2,14 @@ const { iam } = require('../sdk');
 
 const createRole = (roleName) => {
   const policy = {
-    Version: "2012-10-17",
+    Version: '2012-10-17',
     Statement: [
       {
-        Effect: "Allow",
+        Effect: 'Allow',
         Principal: {
-          Service: ["lambda.amazonaws.com", "edgelambda.amazonaws.com"],
+          Service: ['edgelambda.amazonaws.com', 'lambda.amazonaws.com'],
         },
-        Action: "sts:AssumeRole",
+        Action: 'sts:AssumeRole',
       },
     ],
   };
