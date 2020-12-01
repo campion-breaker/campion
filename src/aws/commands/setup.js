@@ -1,12 +1,13 @@
-const fs = require("fs");
-const prompt = require("prompts");
-const configDir = require("../utils/configDir");
-const loadingBar = require("../../cloudflare/utils/loadingBar");
-require("dotenv").config({ path: `${configDir}/.env` });
-const createRole = require("../api/iam/createRole");
-const attachRolePolicy = require("../api/iam/attachRolePolicy");
-const writeToEnv = require("../utils/writeToEnv");
-const createFunction = require("../api/lambda/createFunction");
+const fs = require('fs');
+const prompt = require('prompts');
+const configDir = require('../utils/configDir');
+const loadingBar = require('../../cloudflare/utils/loadingBar');
+require('dotenv').config({ path: `${configDir}/.env` });
+const createRole = require('../api/iam/createRole');
+const attachRolePolicy = require('../api/iam/attachRolePolicy');
+const writeToEnv = require('../utils/writeToEnv');
+const createFunction = require('../api/lambda/createFunction');
+const createTables = require('../api/dynamoDB/createTables');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -15,7 +16,7 @@ const createHiddenCampionDir = () => {
 };
 
 const configMsg = () => {
-  console.log("Campion AWS Config:\n");
+  console.log('Campion AWS Config:\n');
 };
 
 const configGoodbye = () => {
@@ -28,12 +29,7 @@ const promptUser = async (accessKeyId, secretAccessKey) =>
   await prompt(questions(accessKeyId, secretAccessKey));
 
 const clearExistingIds = () => {
-  // process.env.ACCOUNT_ID = "";
-  // process.env.TRAFFIC_ID = "";
-  // process.env.EVENTS_ID = "";
-  // process.env.REQUEST_LOG_ID = "";
-  // process.env.SERVICES_CONFIG_ID = "";
-  // process.env.SUBDOMAIN = "";
+  process.env.ROLE_ARN = '';
 };
 
 const writeToFile = ({ accessKeyId, secretAccessKey }) => {
@@ -43,35 +39,51 @@ const writeToFile = ({ accessKeyId, secretAccessKey }) => {
   clearExistingIds();
 
   fs.writeFileSync(
-    `${configDir}/.env`, 
+    `${configDir}/.env`,
     `AWS_ACCESS_KEY_ID=${accessKeyId}\nAWS_SECRET_KEY=${secretAccessKey}`
   );
 };
 
 const questions = (accessKeyId, secretAccessKey) => [
   {
-    type: "text",
-    name: "accessKeyId",
-    message: "Enter AWS Access Key:",
-    initial: accessKeyId || "",
+    type: 'text',
+    name: 'accessKeyId',
+    message: 'Enter AWS Access Key:',
+    initial: accessKeyId || '',
   },
   {
-    type: "text",
-    name: "secretAccessKey",
-    message: "Enter your secret access key:",
-    initial: secretAccessKey || "",
+    type: 'text',
+    name: 'secretAccessKey',
+    message: 'Enter your secret access key:',
+    initial: secretAccessKey || '',
   },
 ];
 
 const deploy = async () => {
-  const deployId = loadingBar("Deploying ");
+  const deployId = loadingBar('Deploying ');
   try {
-    await createRole('campion').then(async data => {
-      writeToEnv('ROLE_ARN', data.Role.Arn)
-      await attachRolePolicy('arn:aws:iam::aws:policy/AWSLambdaFullAccess', 'campion');
-      await attachRolePolicy('arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess', 'campion');
-      await attachRolePolicy('arn:aws:iam::aws:policy/CloudFrontFullAccess', 'campion')
-      await createFunction('campion3');
+    await createRole('campion').then(async (data) => {
+      writeToEnv('AWS_ROLE_ARN', data.Role.Arn);
+      await attachRolePolicy(
+        'arn:aws:iam::aws:policy/AWSLambdaFullAccess',
+        'campion'
+      );
+      await attachRolePolicy(
+        'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess',
+        'campion'
+      );
+      await attachRolePolicy(
+        'arn:aws:iam::aws:policy/CloudFrontFullAccess',
+        'campion'
+      );
+
+      await new Promise(async (resolve) => {
+        setTimeout(async () => {
+          await createFunction('campion');
+          await createTables();
+          resolve();
+        }, 10000);
+      });
     });
 
     clearInterval(deployId);
@@ -91,8 +103,8 @@ const setup = async () => {
   configMsg();
 
   const userInput =
-    accessKeyId && secretAccessKey 
-      ? await promptUser(accessKeyId, secretAccessKey) 
+    accessKeyId && secretAccessKey
+      ? await promptUser(accessKeyId, secretAccessKey)
       : await promptUser();
 
   if (userInput.accessKeyId && userInput.secretAccessKey) {
@@ -101,7 +113,7 @@ const setup = async () => {
     return;
   }
 
-  console.log("\nCanceled. Campion setup aborted.");
+  console.log('\nCanceled. Campion setup aborted.');
 };
 
 module.exports = setup;
