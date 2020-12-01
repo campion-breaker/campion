@@ -1,6 +1,6 @@
 const putToTable = require("../api/dynamoDB/putToTable");
 const loadingBar = require("../../cloudflare/utils/loadingBar");
-const configExists = require("../../cloudflare/utils/validateConfig");
+const configExists = require("../utils/validateConfig");
 const servicePromptConfig = require("../../cloudflare/utils/servicePromptConfig");
 
 const addSuccessMsg = (service, url) => {
