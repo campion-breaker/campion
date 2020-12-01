@@ -81,7 +81,7 @@ const deleteService = async () => {
     );
     await deleteFromTable("EVENTS", selectedEvents);
     await deleteFromTable("TRAFFIC", selectedTraffic);
-    await deleteFromTable("SERVICES_CONFIG", [selected]);
+    await deleteFromTable("SERVICES_CONFIG", selected);
     clearInterval(deleteServiceId);
     deleteServiceSuccessMsg(selected.NAME);
   } catch (e) {
