@@ -2,6 +2,47 @@ const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient();
 const https = require('https');
 const url = require('url');
+const getIdFromUrl = (request) => request.Records ? request.Records[0].cf.request.uri.slice(12) : '';
+
+async function handleRequest(request) {
+  const serviceId = getIdFromUrl(request);
+  const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
+  const receivedTime = Date.now();
+
+  if (!service || service.statusCode === 500) {
+    return newResponse("Circuit breaker doesn't exist", 404);
+  }
+
+  if (service.CIRCUIT_STATE === 'FORCED-OPEN') {
+    await logRequestMetrics(receivedTime, service);
+    return newResponse(
+      'Circuit has been manually force-opened. Adjust in Campion CLI/GUI.',
+      504
+    );
+  }
+
+  if (service.CIRCUIT_STATE === 'OPEN') {
+    await setStateWhenOpen(service, serviceId);
+    if (service.CIRCUIT_STATE === 'OPEN') {
+      await logRequestMetrics(receivedTime, service);
+      return newResponse('Circuit is open', 504);
+    }
+  }
+
+  if (service.CIRCUIT_STATE === 'HALF-OPEN' && !canRequestProceed(service)) {
+    await logRequestMetrics(receivedTime, service);
+    return newResponse('Circuit is half-open', 504);
+  }
+
+  const response = await processRequest(service);
+  console.log('response', response);
+  const responseTime = Date.now();
+
+  await updateCircuitState(service, serviceId, response);
+  await logRequestMetrics(receivedTime, service, responseTime, response.status);
+
+  return newResponse(response.body, response.status, response.headers);
+}
 
 async function flipState(service, newState) {
   await logEventStateChange(service, newState);
@@ -91,52 +132,13 @@ async function dbFailureRead(tableName) {
   }
 }
 
-const newResponse = (body, status, headers) => {
+const newResponse = (body='', status=200, headers={}) => {
   return {
+    status,
+    headers,
     body,
-    headers: Object.assign({}, headers, status),
   };
 };
-
-async function handleRequest(request) {
-  const serviceId = 'https://arthurkauffman.com';
-  const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
-  const receivedTime = Date.now();
-
-  if (service === null) {
-    return newResponse("Circuit breaker doesn't exist", 404);
-  }
-
-  if (service.CIRCUIT_STATE === 'FORCED-OPEN') {
-    await logRequestMetrics(receivedTime, service);
-    return newResponse(
-      'Circuit has been manually force-opened. Adjust in Campion CLI/GUI.',
-      504
-    );
-  }
-
-  if (service.CIRCUIT_STATE === 'OPEN') {
-    await setStateWhenOpen(service, serviceId);
-    if (service.CIRCUIT_STATE === 'OPEN') {
-      await logRequestMetrics(receivedTime, service);
-      return newResponse('Circuit is open', 504);
-    }
-  }
-
-  if (service.CIRCUIT_STATE === 'HALF-OPEN' && !canRequestProceed(service)) {
-    await logRequestMetrics(receivedTime, service);
-    return newResponse('Circuit is half-open', 504);
-  }
-
-  const response = await processRequest(service);
-  console.log('response', response);
-  const responseTime = Date.now();
-
-  await updateCircuitState(service, serviceId, response);
-  await logRequestMetrics(receivedTime, service, responseTime, response.status);
-
-  return newResponse(response.body, response.status, response.headers);
-}
 
 function canRequestProceed(service) {
   const min = 1;
@@ -282,13 +284,13 @@ async function requestLogCount(serviceId) {
 }
 
 async function logRequestMetrics(receivedTime, service, responseTime, status) {
-  const key = JSON.stringify({
-    ID: service.ID,
+  const key = {
+    ID: service.ID + '_' + receivedTime,
     STATUS: status || '',
     STATE: service.CIRCUIT_STATE,
     TIME: receivedTime,
     LATENCY: responseTime - receivedTime || '',
-  });
+  };
 
   await putDB('TRAFFIC', key);
 }
@@ -315,14 +317,15 @@ const blacklistedHeaders = [
 const readOnlyHeaders = ['content-length', 'host', 'transfer-encoding', 'via'];
 
 exports.handler = async (event, context, callback) => {
-  const response = await handleRequest(event.request);
+  const response = await handleRequest(event);
 
   Object.keys(response.headers).forEach((key) => {
-    response.headers[key] = [{ key: key, value: response.headers[key] }];
     if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key)) {
       delete response.headers[key];
     }
+    response.headers[key] = [{ value: response.headers[key] }];
   });
 
   return callback(null, response);
 };
+
