@@ -91,17 +91,17 @@ async function dbFailureRead(tableName) {
   }
 }
 
-const newResponse = (body, statusCode, headers) => {
+const newResponse = (body, status, headers) => {
   return {
-    statusCode,
+    status,
     headers,
     body,
   };
 };
 
 async function handleRequest(request) {
-  return newResponse(request.event);
-  const serviceId = 'https://arthurkauffman.com';
+  const getIdFromUrl = (request) => request.Records[0].cf.request.uri.slice(12);
+  const serviceId = getIdFromUrl(request);
   const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
   const receivedTime = Date.now();
 
@@ -317,7 +317,7 @@ const blacklistedHeaders = [
 const readOnlyHeaders = ['content-length', 'host', 'transfer-encoding', 'via'];
 
 exports.handler = async (event, context, callback) => {
-  const response = await handleRequest(event.request);
+  const response = await handleRequest(event);
 
   Object.keys(response.headers).forEach((key) => {
     response.headers[key] = [{ key: key, value: response.headers[key] }];
