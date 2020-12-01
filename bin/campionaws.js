@@ -28,11 +28,11 @@ program
   .description("Update the config parameters for a single endpoint")
   .action(() => require("../src/aws/commands/update")());
 
-// program
-//   .command("d")
-//   .alias("delete")
-//   .description("Delete a service from Campion")
-//   .action(() => require("../src/aws/commands/delete")());
+program
+  .command("d")
+  .alias("delete")
+  .description("Delete a service from Campion")
+  .action(() => require("../src/aws/commands/delete")());
 
 program
   .command("f")
