@@ -3,8 +3,7 @@ const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const loadingBar = require("../../cloudflare/utils/loadingBar");
 const deleteFromTable = require("../api/dynamoDB/deleteFromTable");
-const getFromTable = require("../utils/getFromTable");
-const getAllKeys = require("../api/getAllKeys");
+const getFromTable = require("../api/dynamoDB/getFromTable");
 
 require("dotenv").config({ path: `${configDir}/.env` });
 
@@ -72,20 +71,22 @@ const deleteService = async () => {
   const deleteServiceId = loadingBar(`\nDeleting '${selected.NAME}' `);
 
   try {
-    const events = await getFromTable("EVENTS", true);
+    const events = await getFromTable("EVENTS");
     const selectedEvents = events.filter((event) =>
-      event.includes(selected.ID)
+      event.ID.includes(selected.ID)
     );
-    const traffic = await getFromTable("TRAFFIC", true);
-    const selectedTraffic = traffic.filter((obj) => obj.includes(selected.ID));
-    await deleteAllKeys("EVENTS", selectedEvents);
-    await deleteAllKeys("TRAFFIC", selectedTraffic);
-    await deleteFromTable("SERVICES_CONFIG", selected.ID);
+    const traffic = await getFromTable("TRAFFIC");
+    const selectedTraffic = traffic.filter((obj) =>
+      obj.ID.includes(selected.ID)
+    );
+    await deleteFromTable("EVENTS", selectedEvents);
+    await deleteFromTable("TRAFFIC", selectedTraffic);
+    await deleteFromTable("SERVICES_CONFIG", [selected]);
     clearInterval(deleteServiceId);
     deleteServiceSuccessMsg(selected.NAME);
   } catch (e) {
     clearInterval(deleteServiceId);
-    console.log(e.message);
+    console.log(`\n${e.message}`);
   }
 };
 
