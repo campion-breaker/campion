@@ -28,7 +28,7 @@ async function getAllKeys(namespace, unparsed=false) {
 
     return body.result.map((key) => JSON.parse(key.name));
   } else {
-    throw new Error(`\nUnable to retrives ${namespace} keys.`);
+    throw new Error(`\nUnable to retrieve ${namespace} keys.`);
   }
 }
 
