@@ -44,6 +44,47 @@ async function handleRequest(request) {
   return newResponse(response.body, response.status, response.headers);
 }
 
+async function handleRequest(request) {
+  const getIdFromUrl = (request) => request.Records[0].cf.request.uri.slice(12);
+  const serviceId = getIdFromUrl(request);
+  const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
+  const receivedTime = Date.now();
+
+  if (!service) {
+    return newResponse("Circuit breaker doesn't exist", 404);
+  }
+
+  if (service.CIRCUIT_STATE === 'FORCED-OPEN') {
+    await logRequestMetrics(receivedTime, service);
+    return newResponse(
+      'Circuit has been manually force-opened. Adjust in Campion CLI/GUI.',
+      504
+    );
+  }
+
+  if (service.CIRCUIT_STATE === 'OPEN') {
+    await setStateWhenOpen(service, serviceId);
+    if (service.CIRCUIT_STATE === 'OPEN') {
+      await logRequestMetrics(receivedTime, service);
+      return newResponse('Circuit is open', 504);
+    }
+  }
+
+  if (service.CIRCUIT_STATE === 'HALF-OPEN' && !canRequestProceed(service)) {
+    await logRequestMetrics(receivedTime, service);
+    return newResponse('Circuit is half-open', 504);
+  }
+
+  const response = await processRequest(service);
+  console.log('response', response);
+  const responseTime = Date.now();
+
+  await updateCircuitState(service, serviceId, response);
+  await logRequestMetrics(receivedTime, service, responseTime, response.status);
+
+  return newResponse(response.body, response.status, response.headers);
+}
+
 async function flipState(service, newState) {
   await logEventStateChange(service, newState);
 

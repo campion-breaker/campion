@@ -25,7 +25,7 @@ const createCloudFront = () => {
         Quantity: 1,
         Items: [
           {
-            PathPattern: '/*',
+            PathPattern: '*',
             TargetOriginId: 'campion',
             ViewerProtocolPolicy: 'allow-all',
             LambdaFunctionAssociations: {
