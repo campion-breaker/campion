@@ -91,14 +91,16 @@ async function dbFailureRead(tableName) {
   }
 }
 
-const newResponse = (body, status, headers) => {
+const newResponse = (body, statusCode, headers) => {
   return {
+    statusCode,
+    headers,
     body,
-    headers: Object.assign({}, headers, status),
   };
 };
 
 async function handleRequest(request) {
+  return newResponse(request.event);
   const serviceId = 'https://arthurkauffman.com';
   const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
   const receivedTime = Date.now();
