@@ -16,11 +16,11 @@ program
   .description("Protect a new endpoint")
   .action(() => require("../src/aws/commands/add")());
 
-// program
-//   .command("l")
-//   .alias("list")
-//   .description("List all protected services")
-//   .action(() => require("../src/aws/commands/list")());
+program
+  .command("l")
+  .alias("list")
+  .description("List all protected services")
+  .action(() => require("../src/aws/commands/list")());
 
 program
   .command("u")
