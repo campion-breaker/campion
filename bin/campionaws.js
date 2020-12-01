@@ -34,11 +34,11 @@ program
 //   .description("Delete a service from Campion")
 //   .action(() => require("../src/aws/commands/delete")());
 
-// program
-//   .command("f")
-//   .alias("flip")
-//   .description("Manually flip the state of a service's circuit breaker")
-//   .action(() => require("../src/aws/commands/flip")());
+program
+  .command("f")
+  .alias("flip")
+  .description("Manually flip the state of a service's circuit breaker")
+  .action(() => require("../src/aws/commands/flip")());
 
 // program
 //   .command("stats")
