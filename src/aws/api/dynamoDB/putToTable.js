@@ -5,7 +5,7 @@ async function putToTable(tableName, item) {
     TableName: tableName,
     Item: formatItem(item),
   };
-  console.log(params);
+
   return ddb.putItem(params).promise();
 }
 
