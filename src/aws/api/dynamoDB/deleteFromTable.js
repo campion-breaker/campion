@@ -1,18 +1,37 @@
 const { ddb } = require("../sdk");
 
 async function deleteFromTable(tableName, items) {
-  for (let i = 0; i < items.length; i += 1) {
+  let itemsCopy = [...[items].flat()];
+  const promises = [];
+
+  while (itemsCopy.length > 0) {
+    const slice = itemsCopy.slice(0, 25);
+    itemsCopy = itemsCopy.slice(25);
+
+    const paramsInner = [];
+    for (let i = 0; i < slice.length; i++) {
+      const item = {
+        DeleteRequest: {
+          Key: {
+            ID: {
+              S: slice[i].ID
+            }
+          }
+        }
+      };
+      paramsInner.push(item);
+    }
+
     const params = {
-      TableName: tableName,
-      Key: {
-        [items[i].ID]: {
-          S: items[i].ID,
-        },
-      },
+      RequestItems: {
+        [tableName]: paramsInner
+      }
     };
-    console.log(params);
-    ddb.deleteFromTable(params).promise();
-  }
+
+    promises.push(ddb.batchWriteItem(params).promise());
+  };
+
+  return Promise.all(promises);
 }
 
 module.exports = deleteFromTable;
