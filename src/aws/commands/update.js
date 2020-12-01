@@ -34,8 +34,11 @@ const selectService = async (services) => {
 };
 
 const buildConfigChangeKey = (service) => {
+  const serviceCopy = { ...service };
+  serviceCopy.ID = service.ID + Date.now();
+
   return {
-    ...service,
+    ...serviceCopy,
     EVENT: "CONFIG_CHANGE",
     TIME: Date.now(),
     METHOD: "UPDATE",
@@ -63,7 +66,7 @@ const update = async () => {
 
   const newState = await servicePromptConfig(chosenService);
 
-  if (!newState || !(Object.keys(newState).length === 10)) {
+  if (!newState || Object.keys(newState).length !== 10) {
     console.log("\nUpdate aborted.");
     return;
   }

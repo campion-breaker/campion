@@ -10,8 +10,11 @@ const addSuccessMsg = (service, url) => {
 };
 
 const buildConfigChangeKey = (service) => {
+  const serviceCopy = { ...service };
+  serviceCopy.ID = service.ID + Date.now();
+
   return {
-    ...service,
+    ...serviceCopy,
     EVENT: "CONFIG_CHANGE",
     TIME: Date.now(),
     METHOD: "ADD",
