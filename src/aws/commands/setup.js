@@ -7,7 +7,7 @@ const createRole = require('../api/iam/createRole');
 const attachRolePolicy = require('../api/iam/attachRolePolicy');
 const writeToEnv = require('../utils/writeToEnv');
 const createFunction = require('../api/lambda/createFunction');
-const createTables = require('../api/dynamoDB/createTables');
+const createTable = require('../api/dynamoDB/createTable');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -80,7 +80,10 @@ const deploy = async () => {
       await new Promise(async (resolve) => {
         setTimeout(async () => {
           await createFunction('campion');
-          await createTables();
+          await createTable('SERVICES_CONFIG');
+          await createTable('REQUEST_LOG');
+          await createTable('EVENTS');
+          await createTable('TRAFFIC');
           resolve();
         }, 10000);
       });
