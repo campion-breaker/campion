@@ -12,6 +12,11 @@ const createCloudFront = () => {
           {
             DomainName: 'campion-breaker.github.io',
             Id: 'campion',
+            CustomOriginConfig: {
+              HTTPPort: 80,
+              HTTPSPort: 443,
+              OriginProtocolPolicy: 'match-viewer',
+            },
           },
         ],
         Quantity: 1,
@@ -33,6 +38,16 @@ const createCloudFront = () => {
                 },
               ],
             },
+            MinTTL: 0,
+            ForwardedValues: {
+              Cookies: {
+                Forward: `all`,
+                WhitelistedNames: {
+                  Quantity: 0,
+                },
+              },
+              QueryString: true,
+            },
           },
         ],
       },
@@ -42,6 +57,16 @@ const createCloudFront = () => {
         AllowedMethods: {
           Items: ['GET', 'HEAD'],
           Quantity: 2,
+        },
+        MinTTL: 0,
+        ForwardedValues: {
+          Cookies: {
+            Forward: `all`,
+            WhitelistedNames: {
+              Quantity: 0,
+            },
+          },
+          QueryString: true,
         },
       },
       Enabled: true,
