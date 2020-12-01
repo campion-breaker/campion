@@ -1,5 +1,5 @@
-const getServiceConfig = require("../workers/api/getServiceConfig");
-const getAllKeys = require("../workers/api/getAllKeys");
+const getServiceConfig = require("../api/getServiceConfig");
+const getAllKeys = require("../api/getAllKeys");
 
 const getAllServicesConfigs = async () => {
   const services = await getAllKeys("SERVICES_CONFIG_ID");

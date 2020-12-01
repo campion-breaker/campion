@@ -1,11 +1,11 @@
-const getAccountId = require('../workers/api/getAccountId');
-const createNamespace = require('../workers/api/createNamespace');
-const createWorkerWithKVBinding = require('../workers/api/createWorkerWithKVBinding');
+const getAccountId = require('../api/getAccountId');
+const createNamespace = require('../api/createNamespace');
+const createWorkerWithKVBinding = require('../api/createWorkerWithKVBinding');
 const fs = require('fs');
 const prompt = require('prompts');
 const absolutePath = require('../utils/configDir');
 const loadingBar = require('../utils/loadingBar');
-const getWorkersDevSubdomain = require('../workers/api/getWorkersDevSubdomain');
+const getWorkersDevSubdomain = require('../api/getWorkersDevSubdomain');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {

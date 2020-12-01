@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 const FormData = require("form-data");
-const configDir = require("../../utils/configDir");
+const configDir = require("../utils/configDir");
 const fs = require("fs");
 require("dotenv").config({ path: `${configDir}/.env` });
 

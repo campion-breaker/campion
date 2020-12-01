@@ -1,5 +1,5 @@
 const fetch = require("node-fetch");
-const configDir = require("../../utils/configDir");
+const configDir = require("../utils/configDir");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const logChangeEvent = async (key) => {

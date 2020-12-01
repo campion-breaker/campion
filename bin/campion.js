@@ -8,47 +8,47 @@ program
   .command("s")
   .alias("setup")
   .description("Configure Campion with Cloudflare Email and Global API Key")
-  .action(() => require("../src/commands/setup")());
+  .action(() => require("../src/cloudflare/commands/setup")());
 
 program
   .command("a")
   .alias("add")
   .description("Protect a new endpoint")
-  .action(() => require("../src/commands/add")());
+  .action(() => require("../src/cloudflare/commands/add")());
 
 program
   .command("l")
   .alias("list")
   .description("List all protected services")
-  .action(() => require("../src/commands/list")());
+  .action(() => require("../src/cloudflare/commands/list")());
 
 program
   .command("u")
   .alias("update")
   .description("Update the config parameters for a single endpoint")
-  .action(() => require("../src/commands/update")());
+  .action(() => require("../src/cloudflare/commands/update")());
 
 program
   .command("d")
   .alias("delete")
   .description("Delete a service from Campion")
-  .action(() => require("../src/commands/delete")());
+  .action(() => require("../src/cloudflare/commands/delete")());
 
 program
   .command("f")
   .alias("flip")
   .description("Manually flip the state of a service's circuit breaker")
-  .action(() => require("../src/commands/flip")());
+  .action(() => require("../src/cloudflare/commands/flip")());
 
 program
   .command("stats")
   .description("View Campion stats in a browser window.")
-  .action(() => require("../src/commands/stats")());
+  .action(() => require("../src/cloudflare/commands/stats")());
 
 program
   .command("w")
   .alias("wipe")
   .description("Clear all Campion information from Cloudflare.")
-  .action(() => require("../src/commands/wipe")());
+  .action(() => require("../src/cloudflare/commands/wipe")());
 
 program.parse(process.argv);

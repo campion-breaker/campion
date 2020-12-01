@@ -1,8 +1,8 @@
-const update = require('../workers/api/putServicesConfig');
-const loadingBar = require('../utils/loadingBar');
-const configExists = require('../utils/validateConfig');
-const servicePromptConfig = require('../utils/servicePromptConfig');
-const logChangeEvent = require('../workers/api/logChangeEvent');
+const update = require("../api/putServicesConfig");
+const loadingBar = require("../utils/loadingBar");
+const configExists = require("../utils/validateConfig");
+const servicePromptConfig = require("../utils/servicePromptConfig");
+const logChangeEvent = require("../api/logChangeEvent");
 
 const addSuccessMsg = (service, url) => {
   console.log(
@@ -13,9 +13,9 @@ const addSuccessMsg = (service, url) => {
 const buildConfigChangeKey = (service) => {
   return {
     ...service,
-    EVENT: 'CONFIG_CHANGE',
+    EVENT: "CONFIG_CHANGE",
     TIME: Date.now(),
-    METHOD: 'ADD',
+    METHOD: "ADD",
   };
 };
 

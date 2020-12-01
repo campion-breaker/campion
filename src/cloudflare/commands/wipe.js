@@ -1,9 +1,6 @@
 const prompt = require("prompts");
 const configDir = require("../utils/configDir");
-const {
-  deleteWorker,
-  deleteNamespace,
-} = require("../workers/api/wipeCloudflare");
+const { deleteWorker, deleteNamespace } = require("../api/wipeCloudflare");
 const loadingBar = require("../utils/loadingBar");
 const fs = require("fs");
 require("dotenv").config({ path: `${configDir}/.env` });

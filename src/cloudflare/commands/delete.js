@@ -2,10 +2,10 @@ const prompt = require("prompts");
 const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const loadingBar = require("../utils/loadingBar");
-const deleteServiceConfig = require("../workers/api/deleteServiceConfig");
+const deleteServiceConfig = require("../api/deleteServiceConfig");
 const getListOfServices = require("../utils/getListOfServices");
-const getAllKeys = require("../workers/api/getAllKeys");
-const deleteAllKeys = require("../workers/api/deleteAllKeys");
+const getAllKeys = require("../api/getAllKeys");
+const deleteAllKeys = require("../api/deleteAllKeys");
 require("dotenv").config({ path: `${configDir}/.env` });
 
 const deleteServiceSuccessMsg = (service) => {

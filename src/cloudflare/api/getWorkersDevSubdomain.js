@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
-const configDir = require('../../utils/configDir');
-const writeIdToEnv = require('../../utils/writeIdToEnv');
+const configDir = require('../utils/configDir');
+const writeIdToEnv = require('../utils/writeIdToEnv');
 require('dotenv').config({ path: `${configDir}/.env` });
 
 const getWorkersDevSubdomain = async () => {

@@ -2,9 +2,9 @@ const prompt = require("prompts");
 const configDir = require("../utils/configDir");
 const configExists = require("../utils/validateConfig");
 const loadingBar = require("../utils/loadingBar");
-const putServicesConfig = require("../workers/api/putServicesConfig");
+const putServicesConfig = require("../api/putServicesConfig");
 const servicePromptConfig = require("../utils/servicePromptConfig");
-const logChangeEvent = require("../workers/api/logChangeEvent");
+const logChangeEvent = require("../api/logChangeEvent");
 const getListOfServices = require("../utils/getListOfServices");
 require("dotenv").config({ path: `${configDir}/.env` });
 
