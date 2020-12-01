@@ -3,7 +3,7 @@ const documentClient = new AWS.DynamoDB.DocumentClient();
 const https = require('https');
 const url = require('url');
 const getIdFromUrl = (request) =>
-  request.Records ? request.Records[0].cf.request.uri.slice(12) : '';
+  request.Records ? request.Records[0].cf.request.querystring.slice(3) : '';
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
