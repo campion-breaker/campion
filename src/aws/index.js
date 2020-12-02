@@ -4,6 +4,10 @@ const https = require('https');
 const url = require('url');
 const getIdFromUrl = (request) =>
   request.Records ? request.Records[0].cf.request.querystring.slice(3) : '';
+const getMethodFromRequest = (request) =>
+  request.Records ? request.Records[0].cf.request.method : 'GET';
+const getBodyFromRequest = (request) =>
+  request.Records ? request.Records[0].cf.request.body.data : '';
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
@@ -35,7 +39,7 @@ async function handleRequest(request) {
     return newResponse('Circuit is half-open', 504);
   }
 
-  const response = await processRequest(service);
+  const response = await processRequest(service, request);
   console.log('response', response);
   const responseTime = Date.now();
 
@@ -148,8 +152,10 @@ function canRequestProceed(service) {
   return randNum === 1;
 }
 
-async function processRequest(service) {
+async function processRequest(service, request) {
   let timeoutId;
+  const method = getMethodFromRequest(request);
+  const body = getBodyFromRequest(request);
 
   const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
@@ -163,7 +169,7 @@ async function processRequest(service) {
 
   const fetchPromise = new Promise((resolve, reject) => {
     const req = https.request(
-      Object.assign({}, url.parse(service.ID), { method: 'GET' }),
+      Object.assign({}, url.parse(service.ID), { method }),
       (res) => {
         let body, failure, key;
         res.on('data', (data) => {
@@ -195,6 +201,7 @@ async function processRequest(service) {
       console.error(e);
     });
 
+    req.write(body);
     req.end();
   });
 
@@ -259,7 +266,7 @@ async function updateCircuitState(service, serviceId, response) {
 
 async function logEventStateChange(service, newState) {
   const stateChangeEntry = {
-    ID: service.ID,
+    ID: service.ID + '_' + Date.now(),
     NAME: service.NAME,
     EVENT: 'STATE_CHANGE',
     TIME: Date.now(),
@@ -321,10 +328,10 @@ exports.handler = async (event, context, callback) => {
   const response = await handleRequest(event);
 
   Object.keys(response.headers).forEach((key) => {
+    response.headers[key] = [{ value: response.headers[key] }];
     if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key)) {
       delete response.headers[key];
     }
-    response.headers[key] = [{ value: response.headers[key] }];
   });
 
   return callback(null, response);
