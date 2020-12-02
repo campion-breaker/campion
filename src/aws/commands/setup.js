@@ -1,7 +1,7 @@
 const fs = require('fs');
 const prompt = require('prompts');
-const configDir = require('../utils/configDir');
 const loadingBar = require('../../cloudflare/utils/loadingBar');
+const configDir = require('../utils/configDir');
 require('dotenv').config({ path: `${configDir}/.env` });
 const createRole = require('../api/iam/createRole');
 const attachRolePolicy = require('../api/iam/attachRolePolicy');
@@ -70,18 +70,19 @@ const createAllTablesAndCheckSuccess = async () => {
   const tableArn3 = tableCreation3.TableDescription.TableArn;
   const tableArn4 = tableCreation4.TableDescription.TableArn;
 
-  if (tableArn1) writeToEnv('SERVICES_CONFIG', tableArn1);
-  if (tableArn2) writeToEnv('REQUEST_LOG', tableArn2);
-  if (tableArn3) writeToEnv('EVENTS', tableArn3);
-  if (tableArn4) writeToEnv('TRAFFIC', tableArn4);
+  if (tableArn1) writeToEnv('AWS_SERVICES_CONFIG', tableArn1);
+  if (tableArn2) writeToEnv('AWS_REQUEST_LOG', tableArn2);
+  if (tableArn3) writeToEnv('AWS_EVENTS', tableArn3);
+  if (tableArn4) writeToEnv('AWS_TRAFFIC', tableArn4);
 
   if (!tableArn1 || !tableArn2 || !tableArn3 || !tableArn4) {
     throw 'There was a problem setting up Campion. Please run campionaws wipe and try again.';
   }
 };
 
-const createFunctionAndCheckSuccess = async () => {
-  const lambdaData = await createFunction('campion');
+const createFunctionAndCheckSuccess = async (name) => {
+  writeToEnv('AWS_FUNCTION_NAME', name);
+  const lambdaData = await createFunction(name);
   const functionArn = lambdaData.FunctionArn;
 
   if (functionArn) {
@@ -94,9 +95,11 @@ const createFunctionAndCheckSuccess = async () => {
 const createCloudFrontAndCheckSuccess = async () => {
   const cloudfrontData = await createCloudFront();
   const domainName = cloudfrontData.Distribution.DomainName;
+  const id = cloudfrontData.Distribution.Id;
 
-  if (domainName) {
+  if (domainName && id) {
     writeToEnv('AWS_DOMAIN_NAME', domainName);
+    writeToEnv('AWS_CLOUDFRONT_ID', id);
   } else {
     throw 'There was a problem setting up Campion. Please run campionaws wipe and try again.';
   }
@@ -123,7 +126,7 @@ const deploy = async () => {
 
       await new Promise(async (resolve) => {
         setTimeout(async () => {
-          await createFunctionAndCheckSuccess();
+          await createFunctionAndCheckSuccess('campion6');
           await createCloudFrontAndCheckSuccess();
           await createAllTablesAndCheckSuccess();
           resolve();
