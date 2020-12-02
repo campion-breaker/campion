@@ -89,10 +89,9 @@ const deleteExistingRole = async () => {
 
 const deleteExistingDistribution = async () => {
   const distributionId = process.env.AWS_CLOUDFRONT_ID;
-  let data;
 
   if (distributionId) {
-    data = await deleteDistribution(distributionId);
+    await deleteDistribution(distributionId);
     process.env.AWS_CLOUDFRONT_ID = "";
     process.env.AWS_DOMAIN_NAME = "";
   }
@@ -102,7 +101,7 @@ const deleteExistingFunction = async () => {
   const lambdaArn = process.env.AWS_LAMBDA_ARN;
 
   if (lambdaArn) {
-    const data = await deleteFunction();
+    await deleteFunction();
     process.env.AWS_LAMBDA_ARN = "";
     process.env.AWS_FUNCTION_NAME = "";
   }

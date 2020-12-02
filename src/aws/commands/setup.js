@@ -127,7 +127,7 @@ const deploy = async () => {
       await new Promise(async (resolve) => {
         setTimeout(async () => {
           try {
-            await createFunctionAndCheckSuccess("campion13");
+            await createFunctionAndCheckSuccess("campion14");
             await createCloudFrontAndCheckSuccess();
             await createAllTablesAndCheckSuccess();
             resolve();

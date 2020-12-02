@@ -3,6 +3,7 @@ const { cloudFront } = require("../sdk");
 const deleteDistribution = async (Id) => {
   let e_tag;
   let disabled;
+
   async function disableCloudfrontDistribution() {
     const previousDistributionConfig = await cloudFront
       .getDistributionConfig({
@@ -10,6 +11,10 @@ const deleteDistribution = async (Id) => {
       })
       .promise();
     e_tag = previousDistributionConfig.ETag;
+
+    if (previousDistributionConfig.DistributionConfig.Enabled === false) {
+      return;
+    }
 
     previousDistributionConfig.DistributionConfig.Enabled = false;
 
@@ -39,7 +44,9 @@ const deleteDistribution = async (Id) => {
     IfMatch: e_tag,
   };
 
-  return cloudFront.deleteDistribution(deleteParams).promise();
+  await new Promise((resolve) => setTimeout(() => resolve(), 2000));
+
+  return cloudFront.deleteDistribution(deleteParams).promise()
 };
 
 module.exports = deleteDistribution;
