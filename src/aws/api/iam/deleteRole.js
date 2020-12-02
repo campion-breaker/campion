@@ -1,4 +1,4 @@
-const { iam } = require('../sdk');
+const { iam } = require("../sdk");
 
 const deleteRole = (RoleName) => {
   const params = {
