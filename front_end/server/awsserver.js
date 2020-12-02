@@ -3,9 +3,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const getAllKeys = require(`${__dirname}/../../src/cloudflare/api/getAllKeys`);
-const getAllServicesConfigs = require(`${__dirname}/../../src/cloudflare/utils/getAllServicesConfigs`);
-const configDir = require('../../src/cloudflare/utils/configDir');
+const getFromTable = require(`${__dirname}/../../src/aws/api/dynamoDB/getFromTable`);
+const configDir = require('../../src/aws/utils/configDir');
 require('dotenv').config({ path: `${configDir}/.env` });
 const app = express();
 const host = 'localhost';
@@ -20,26 +19,26 @@ app.get('/', (_, res) => {
 });
 
 app.get('/events', async (req, res) => {
-  const events = await getAllKeys('EVENTS_ID');
+  const events = await getFromTable('EVENTS');
   res.set('Content-Type', 'application/json');
   res.send(events);
 });
 
 app.get('/traffic', async (req, res) => {
-  const traffic = await getAllKeys('TRAFFIC_ID');
+  const traffic = await getFromTable('TRAFFIC');
   res.set('Content-Type', 'application/json');
   res.send(traffic);
 });
 
 app.get('/endpoints', async (req, res) => {
-  const endpoints = await getAllServicesConfigs();
+  const endpoints = await getFromTable('SERVICES_CONFIG');
   res.set('Content-Type', 'application/json');
   res.send(endpoints);
 });
 
 app.get('/subdomain', (req, res) => {
   res.set('Content-Type', 'application/json');
-  res.send(JSON.stringify(process.env.SUBDOMAIN));
+  res.send(JSON.stringify(process.env.AWS_DOMAIN_NAME));
 });
 
 app.listen(port, host, () => {

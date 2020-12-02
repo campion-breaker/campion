@@ -9,7 +9,7 @@ const formatItem = (item) => {
   return result;
 };
 
-async function getAllServiceConfigs(tableName) {
+async function getFromTable(tableName) {
   const params = {
     TableName: tableName,
   };
@@ -24,4 +24,4 @@ async function getAllServiceConfigs(tableName) {
   return result;
 }
 
-module.exports = getAllServiceConfigs;
+module.exports = getFromTable;
