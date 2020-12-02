@@ -2,25 +2,6 @@ const AWS = require('aws-sdk');
 const documentClient = new AWS.DynamoDB.DocumentClient();
 const https = require('https');
 const url = require('url');
-const getIdFromUrl = (request) =>
-  request.Records ? request.Records[0].cf.request.querystring.slice(3) : '';
-const getMethodFromRequest = (request) =>
-  request.Records ? request.Records[0].cf.request.method : 'GET';
-const getBodyFromRequest = (request) =>
-  request.Records ? request.Records[0].cf.request.body.data : '';
-
-const getHeadersFromRequest = (request) => {
-  const headersObj = request.Records[0].cf.request.headers;
-  const headerKeys = Object.keys(headersObj);
-  const formattedHeaders = {};
-
-  headerKeys.forEach((key) => {
-    const header = headersObj[key][0];
-    formattedHeaders[header['key']] = header['value'];
-  });
-
-  return formattedHeaders;
-};
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
@@ -61,6 +42,40 @@ async function handleRequest(request) {
 
   return newResponse(response.body, response.status, response.headers);
 }
+
+const getIdFromUrl = (request) => {
+  if (request.Records && request.Records[0].cf.request.querystring) {
+    return request.Records[0].cf.request.querystring.slice(3);
+  }
+  return '';
+};
+
+const getMethodFromRequest = (request) => {
+  if (request.Records && request.Records[0].cf.request.method) {
+    return request.Records[0].cf.request.method;
+  }
+  return 'GET';
+};
+
+const getBodyFromRequest = (request) => {
+  if (request.Records && request.Records[0].cf.request.body) {
+    return request.Records[0].cf.request.body.data;
+  }
+  return '';
+};
+
+const getHeadersFromRequest = (request) => {
+  const headersObj = request.Records[0].cf.request.headers;
+  const headerKeys = Object.keys(headersObj);
+  const formattedHeaders = {};
+
+  headerKeys.forEach((key) => {
+    const header = headersObj[key][0];
+    formattedHeaders[header['key']] = header['value'];
+  });
+
+  return formattedHeaders;
+};
 
 async function flipState(service, newState) {
   await logEventStateChange(service, newState);
