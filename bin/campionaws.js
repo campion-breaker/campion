@@ -40,10 +40,10 @@ program
   .description("Manually flip the state of a service's circuit breaker")
   .action(() => require('../src/aws/commands/flip')());
 
-// program
-//   .command("stats")
-//   .description("View Campion stats in a browser window.")
-//   .action(() => require("../src/aws/commands/stats")());
+program
+  .command("stats")
+  .description("View Campion stats in a browser window.")
+  .action(() => require("../src/aws/commands/stats")());
 
 program
   .command('w')
