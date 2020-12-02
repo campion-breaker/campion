@@ -1,14 +1,14 @@
-const fs = require("fs");
-const prompt = require("prompts");
-const configDir = require("../utils/configDir");
-const loadingBar = require("../../cloudflare/utils/loadingBar");
-require("dotenv").config({ path: `${configDir}/.env` });
-const createRole = require("../api/iam/createRole");
-const attachRolePolicy = require("../api/iam/attachRolePolicy");
-const writeToEnv = require("../utils/writeToEnv");
-const createFunction = require("../api/lambda/createFunction");
-const createTable = require("../api/dynamoDB/createTable");
-const createCloudFront = require("../api/cloudFront/createCloudFront");
+const fs = require('fs');
+const prompt = require('prompts');
+const configDir = require('../utils/configDir');
+const loadingBar = require('../../cloudflare/utils/loadingBar');
+require('dotenv').config({ path: `${configDir}/.env` });
+const createRole = require('../api/iam/createRole');
+const attachRolePolicy = require('../api/iam/attachRolePolicy');
+const writeToEnv = require('../utils/writeToEnv');
+const createFunction = require('../api/lambda/createFunction');
+const createTable = require('../api/dynamoDB/createTable');
+const createCloudFront = require('../api/cloudFront/createCloudFront');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -17,7 +17,7 @@ const createHiddenCampionDir = () => {
 };
 
 const configMsg = () => {
-  console.log("Campion AWS Config:\n");
+  console.log('Campion AWS Config:\n');
 };
 
 const configGoodbye = () => {
@@ -30,7 +30,7 @@ const promptUser = async (accessKeyId, secretAccessKey) =>
   await prompt(questions(accessKeyId, secretAccessKey));
 
 const clearExistingIds = () => {
-  process.env.ROLE_ARN = "";
+  process.env.ROLE_ARN = '';
 };
 
 const writeToFile = ({ accessKeyId, secretAccessKey }) => {
@@ -47,47 +47,85 @@ const writeToFile = ({ accessKeyId, secretAccessKey }) => {
 
 const questions = (accessKeyId, secretAccessKey) => [
   {
-    type: "text",
-    name: "accessKeyId",
-    message: "Enter AWS Access Key:",
-    initial: accessKeyId || "",
+    type: 'text',
+    name: 'accessKeyId',
+    message: 'Enter AWS Access Key:',
+    initial: accessKeyId || '',
   },
   {
-    type: "text",
-    name: "secretAccessKey",
-    message: "Enter your secret access key:",
-    initial: secretAccessKey || "",
+    type: 'text',
+    name: 'secretAccessKey',
+    message: 'Enter your secret access key:',
+    initial: secretAccessKey || '',
   },
 ];
 
+const createAllTablesAndCheckSuccess = async () => {
+  const tableCreation1 = await createTable('SERVICES_CONFIG');
+  const tableCreation2 = await createTable('REQUEST_LOG');
+  const tableCreation3 = await createTable('EVENTS');
+  const tableCreation4 = await createTable('TRAFFIC');
+  const tableArn1 = tableCreation1.TableDescription.TableArn;
+  const tableArn2 = tableCreation2.TableDescription.TableArn;
+  const tableArn3 = tableCreation3.TableDescription.TableArn;
+  const tableArn4 = tableCreation4.TableDescription.TableArn;
+
+  if (tableArn1) writeToEnv('SERVICES_CONFIG', tableArn1);
+  if (tableArn2) writeToEnv('REQUEST_LOG', tableArn2);
+  if (tableArn3) writeToEnv('EVENTS', tableArn3);
+  if (tableArn4) writeToEnv('TRAFFIC', tableArn4);
+
+  if (!tableArn1 || !tableArn2 || !tableArn3 || !tableArn4) {
+    throw 'There was a problem setting up Campion. Please run campionaws wipe and try again.';
+  }
+};
+
+const createFunctionAndCheckSuccess = async () => {
+  const lambdaData = await createFunction('campion');
+  const functionArn = lambdaData.FunctionArn;
+
+  if (functionArn) {
+    writeToEnv('AWS_LAMBDA_ARN', functionArn + `:${lambdaData.Version}`);
+  } else {
+    throw 'There was a problem setting up Campion. Please run campionaws wipe and try again.';
+  }
+};
+
+const createCloudFrontAndCheckSuccess = async () => {
+  const cloudfrontData = await createCloudFront();
+  const domainName = cloudfrontData.Distribution.DomainName;
+
+  if (domainName) {
+    writeToEnv('AWS_DOMAIN_NAME', domainName);
+  } else {
+    throw 'There was a problem setting up Campion. Please run campionaws wipe and try again.';
+  }
+};
+
 const deploy = async () => {
-  const deployId = loadingBar("Deploying ");
+  const deployId = loadingBar('Deploying ');
   try {
-    await createRole("campion").then(async (data) => {
-      writeToEnv("AWS_ROLE_ARN", data.Role.Arn);
+    await createRole('campion').then(async (data) => {
+      writeToEnv('AWS_ROLE_ARN', data.Role.Arn);
+      writeToEnv('AWS_ROLE_NAME', data.Role.RoleName);
       await attachRolePolicy(
-        "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
-        "campion"
+        'arn:aws:iam::aws:policy/AWSLambdaFullAccess',
+        'campion'
       );
       await attachRolePolicy(
-        "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
-        "campion"
+        'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess',
+        'campion'
       );
       await attachRolePolicy(
-        "arn:aws:iam::aws:policy/CloudFrontFullAccess",
-        "campion"
+        'arn:aws:iam::aws:policy/CloudFrontFullAccess',
+        'campion'
       );
 
       await new Promise(async (resolve) => {
         setTimeout(async () => {
-          const lambdaData = await createFunction("campion6");
-          writeToEnv("AWS_LAMBDA_ARN", lambdaData.FunctionArn + `:${lambdaData.Version}`);
-          const cloudfrontData = await createCloudFront();
-          writeToEnv("AWS_DOMAIN_NAME", cloudfrontData.Distribution.DomainName);
-          await createTable("SERVICES_CONFIG");
-          await createTable("REQUEST_LOG");
-          await createTable("EVENTS");
-          await createTable("TRAFFIC");
+          await createFunctionAndCheckSuccess();
+          await createCloudFrontAndCheckSuccess();
+          await createAllTablesAndCheckSuccess();
           resolve();
         }, 10000);
       });
@@ -120,7 +158,7 @@ const setup = async () => {
     return;
   }
 
-  console.log("\nCanceled. Campion setup aborted.");
+  console.log('\nCanceled. Campion setup aborted.');
 };
 
 module.exports = setup;
