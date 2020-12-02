@@ -6,7 +6,8 @@
   "bin": {
     "campion": "bin/campion.js",
     "campionaws": "bin/campionaws.js",
-    "start_server": "front_end/server/server.js"
+    "start_server": "front_end/server/server.js",
+    "start_aws_server": "front_end/server/awsserver.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
