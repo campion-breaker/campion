@@ -7,11 +7,7 @@ const deleteFunction = () => {
     FunctionName: process.env.AWS_FUNCTION_NAME,
   };
 
-  return lambda.deleteFunction(params, (e) => {
-    if (e) {
-      throw '\nAll versions of distributed Lambda could not be deleted. Try again in a few hours.';
-    }
-  }).promise();
+  return lambda.deleteFunction(params).promise();
 };
 
 module.exports = deleteFunction;

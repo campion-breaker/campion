@@ -25,6 +25,10 @@ const confirm = () => {
 };
 
 const resetEnvFile = () => {
+  if (!fs.existsSync(configDir)) {
+    return;
+  }
+
   const envKeys = [
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_KEY",
