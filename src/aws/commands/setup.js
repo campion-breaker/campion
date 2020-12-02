@@ -80,10 +80,10 @@ const deploy = async () => {
 
       await new Promise(async (resolve) => {
         setTimeout(async () => {
-          const data = await createFunction("campion5");
-          writeToEnv("AWS_LAMBDA_ARN", data.FunctionArn + `:${data.Version}`);
-          const data2 = await createCloudFront();
-          writeToEnv("AWS_DOMAIN_NAME", data2.Distribution.DomainName);
+          const lambdaData = await createFunction("campion6");
+          writeToEnv("AWS_LAMBDA_ARN", lambdaData.FunctionArn + `:${lambdaData.Version}`);
+          const cloudfrontData = await createCloudFront();
+          writeToEnv("AWS_DOMAIN_NAME", cloudfrontData.Distribution.DomainName);
           await createTable("SERVICES_CONFIG");
           await createTable("REQUEST_LOG");
           await createTable("EVENTS");
