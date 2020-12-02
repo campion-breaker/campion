@@ -76,14 +76,9 @@ const deleteExistingRole = async () => {
     await detachRolePolicy("arn:aws:iam::aws:policy/AWSLambdaFullAccess");
     await detachRolePolicy("arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess");
     await detachRolePolicy("arn:aws:iam::aws:policy/CloudFrontFullAccess");
-    const data = await deleteRole(roleName);
-
-    if (data) {
-      process.env.AWS_ROLE_NAME = "";
-      process.env.AWS_ROLE_ARN = "";
-    } else {
-      throw "Error deleting IAM role. Please Try Again.";
-    }
+    await deleteRole(roleName);
+    process.env.AWS_ROLE_NAME = "";
+    process.env.AWS_ROLE_ARN = "";
   }
 };
 
@@ -107,6 +102,12 @@ const deleteExistingFunction = async () => {
   }
 };
 
+const deleteEnv = () => {
+  if (!process.env.AWS_LAMBDA_ARN && !process.env.AWS_FUNCTION_NAME) {
+    fs.rmdirSync(configDir, { recursive: true });
+  }
+};
+
 const wipe = async () => {
   const confirmation = await prompt(confirm());
 
@@ -122,6 +123,7 @@ const wipe = async () => {
     await deleteAllExistingTables();
     await deleteExistingDistribution();
     await deleteExistingFunction();
+    deleteEnv();
     clearInterval(deleteServiceId);
     wipeSuccessMsg();
   } catch (e) {
