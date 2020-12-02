@@ -1,13 +1,13 @@
-const prompt = require('prompts');
-const loadingBar = require('../../cloudflare/utils/loadingBar');
-const fs = require('fs');
-const deleteTable = require('../api/dynamoDB/deleteTable');
-const deleteFunction = require('../api/lambda/deleteFunction');
-const deleteDistribution = require('../api/cloudFront/deleteDistribution');
-const deleteRole = require('../api/iam/deleteRole');
-const deleteRolePolicy = require('../api/iam/deleteRolePolicy');
-const configDir = require('../utils/configDir');
-require('dotenv').config({ path: `${configDir}/.env` });
+const prompt = require("prompts");
+const loadingBar = require("../../cloudflare/utils/loadingBar");
+const fs = require("fs");
+const deleteTable = require("../api/dynamoDB/deleteTable");
+const deleteFunction = require("../api/lambda/deleteFunction");
+const deleteDistribution = require("../api/cloudFront/deleteDistribution");
+const deleteRole = require("../api/iam/deleteRole");
+const detachRolePolicy = require("../api/iam/detachRolePolicy");
+const configDir = require("../utils/configDir");
+require("dotenv").config({ path: `${configDir}/.env` });
 
 const wipeSuccessMsg = () => {
   console.log(
@@ -17,43 +17,73 @@ const wipeSuccessMsg = () => {
 
 const confirm = () => {
   return {
-    type: 'confirm',
-    name: 'value',
+    type: "confirm",
+    name: "value",
     message: `Confirm deletion of Campion from AWS.\n  This will erase all Circuit Breakers, settings, and protected endpoints.\n  This action cannot be undone.\n  Are you sure?`,
     initial: false,
   };
 };
 
-const deleteAllExistingTables = async () => {
-  const servicesConfig = process.env.AWS_SERVICES_CONFIG;
-  const events = process.env.AWS_EVENTS;
-  const requestLog = process.env.AWS_REQUEST_LOG;
-  const traffic = process.env.AWS_TRAFFIC;
+const resetEnvFile = () => {
+  const envKeys = [
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_KEY",
+    "AWS_ROLE_ARN",
+    "AWS_ROLE_NAME",
+    "AWS_FUNCTION_NAME",
+    "AWS_LAMBDA_ARN",
+    "AWS_DOMAIN_NAME",
+    "AWS_CLOUDFRONT_ID",
+    "AWS_SERVICES_CONFIG",
+    "AWS_REQUEST_LOG",
+    "AWS_EVENTS",
+    "AWS_TRAFFIC",
+  ];
 
-  if (servicesConfig) {
-    const data = await deleteTable('SERVICES_CONFIG');
+  const result = envKeys
+    .map((key) => `${key}=${process.env[key] || ""}`)
+    .join("\n");
+
+  fs.writeFileSync(`${configDir}/.env`, result);
+};
+
+const deleteExistingTable = async (tableName) => {
+  const tableARN = process.env[`AWS_${tableName}`];
+
+  if (tableARN) {
+    const data = await deleteTable(tableName);
     const status = data.TableDescription.TableStatus;
-    if (status !== 'DELETING') {
-      throw 'Something went wrong. Please try again.';
-    }
-    console.log('DYNAMODB', data);
-  }
 
-  // const tableDeletion1 = await deleteTable('SEVICES_CONFIG');
-  // const tableDeletion2 = await deleteTable('EVENTS');
-  // const tableDeletion3 = await deleteTable('REQUEST_LOG');
-  // const tableDeletion4 = await deleteTable('TRAFFIC');
+    if (status !== "DELETING") {
+      throw `Something went wrong deleting ${tableName}. Please try again.`;
+    } else {
+      process.env[`AWS_${tableName}`] = "";
+    }
+  }
+};
+
+const deleteAllExistingTables = async () => {
+  await deleteExistingTable("SERVICES_CONFIG");
+  await deleteExistingTable("EVENTS");
+  await deleteExistingTable("TRAFFIC");
+  await deleteExistingTable("REQUEST_LOG");
 };
 
 const deleteExistingRole = async () => {
   const roleName = process.env.AWS_ROLE_NAME;
 
   if (roleName) {
-    await deleteRolePolicy('AWSLambdaFullAccess');
-    await deleteRolePolicy('AmazonDynamoDBFullAccess');
-    await deleteRolePolicy('CloudFrontFullAccess');
+    await detachRolePolicy("arn:aws:iam::aws:policy/AWSLambdaFullAccess");
+    await detachRolePolicy("arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess");
+    await detachRolePolicy("arn:aws:iam::aws:policy/CloudFrontFullAccess");
     const data = await deleteRole(roleName);
-    console.log('ROLE', data);
+
+    if (data) {
+      process.env.AWS_ROLE_NAME = "";
+      process.env.AWS_ROLE_ARN = "";
+    } else {
+      throw "Error deleting IAM role. Please Try Again.";
+    }
   }
 };
 
@@ -63,7 +93,8 @@ const deleteExistingDistribution = async () => {
 
   if (distributionId) {
     data = await deleteDistribution(distributionId);
-    console.log('CLOUDFRONT', data);
+    process.env.AWS_CLOUDFRONT_ID = "";
+    process.env.AWS_DOMAIN_NAME = "";
   }
 };
 
@@ -72,7 +103,8 @@ const deleteExistingFunction = async () => {
 
   if (lambdaArn) {
     const data = await deleteFunction();
-    console.log('LAMBDA', data);
+    process.env.AWS_LAMBDA_ARN = "";
+    process.env.AWS_FUNCTION_NAME = "";
   }
 };
 
@@ -80,23 +112,24 @@ const wipe = async () => {
   const confirmation = await prompt(confirm());
 
   if (!confirmation.value) {
-    console.log('Campion deletion aborted.');
+    console.log("Campion deletion aborted.");
     return;
   }
 
   const deleteServiceId = loadingBar(`\nDeleting Campion `);
 
   try {
-    await deleteAllExistingTables();
     await deleteExistingRole();
+    await deleteAllExistingTables();
     await deleteExistingDistribution();
     await deleteExistingFunction();
     clearInterval(deleteServiceId);
     wipeSuccessMsg();
   } catch (e) {
     clearInterval(deleteServiceId);
-    console.log(e.message);
+    console.log(`\n${e.message}`);
   } finally {
+    resetEnvFile();
   }
 };
 
