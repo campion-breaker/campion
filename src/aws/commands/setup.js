@@ -1,7 +1,7 @@
 const fs = require("fs");
 const prompt = require("prompts");
-const configDir = require("../utils/configDir");
 const loadingBar = require("../../cloudflare/utils/loadingBar");
+const configDir = require("../utils/configDir");
 require("dotenv").config({ path: `${configDir}/.env` });
 const createRole = require("../api/iam/createRole");
 const attachRolePolicy = require("../api/iam/attachRolePolicy");
@@ -60,11 +60,57 @@ const questions = (accessKeyId, secretAccessKey) => [
   },
 ];
 
+const createAllTablesAndCheckSuccess = async () => {
+  const tableCreation1 = await createTable("SERVICES_CONFIG");
+  const tableCreation2 = await createTable("REQUEST_LOG");
+  const tableCreation3 = await createTable("EVENTS");
+  const tableCreation4 = await createTable("TRAFFIC");
+  const tableArn1 = tableCreation1.TableDescription.TableArn;
+  const tableArn2 = tableCreation2.TableDescription.TableArn;
+  const tableArn3 = tableCreation3.TableDescription.TableArn;
+  const tableArn4 = tableCreation4.TableDescription.TableArn;
+
+  if (tableArn1) writeToEnv("AWS_SERVICES_CONFIG", tableArn1);
+  if (tableArn2) writeToEnv("AWS_REQUEST_LOG", tableArn2);
+  if (tableArn3) writeToEnv("AWS_EVENTS", tableArn3);
+  if (tableArn4) writeToEnv("AWS_TRAFFIC", tableArn4);
+
+  if (!tableArn1 || !tableArn2 || !tableArn3 || !tableArn4) {
+    throw "There was a problem setting up Campion. Please run campionaws wipe and try again.";
+  }
+};
+
+const createFunctionAndCheckSuccess = async (name) => {
+  writeToEnv("AWS_FUNCTION_NAME", name);
+  const lambdaData = await createFunction(name);
+  const functionArn = lambdaData.FunctionArn;
+
+  if (functionArn) {
+    writeToEnv("AWS_LAMBDA_ARN", functionArn + `:${lambdaData.Version}`);
+  } else {
+    throw "There was a problem setting up Campion. Please run campionaws wipe and try again.";
+  }
+};
+
+const createCloudFrontAndCheckSuccess = async () => {
+  const cloudfrontData = await createCloudFront();
+  const domainName = cloudfrontData.Distribution.DomainName;
+  const id = cloudfrontData.Distribution.Id;
+
+  if (domainName && id) {
+    writeToEnv("AWS_DOMAIN_NAME", domainName);
+    writeToEnv("AWS_CLOUDFRONT_ID", id);
+  } else {
+    throw "There was a problem setting up Campion. Please run campionaws wipe and try again.";
+  }
+};
+
 const deploy = async () => {
   const deployId = loadingBar("Deploying ");
   try {
     await createRole("campion").then(async (data) => {
       writeToEnv("AWS_ROLE_ARN", data.Role.Arn);
+      writeToEnv("AWS_ROLE_NAME", data.Role.RoleName);
       await attachRolePolicy(
         "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
         "campion"
@@ -80,24 +126,24 @@ const deploy = async () => {
 
       await new Promise(async (resolve) => {
         setTimeout(async () => {
-          const lambdaData = await createFunction("campion6");
-          writeToEnv("AWS_LAMBDA_ARN", lambdaData.FunctionArn + `:${lambdaData.Version}`);
-          const cloudfrontData = await createCloudFront();
-          writeToEnv("AWS_DOMAIN_NAME", cloudfrontData.Distribution.DomainName);
-          await createTable("SERVICES_CONFIG");
-          await createTable("REQUEST_LOG");
-          await createTable("EVENTS");
-          await createTable("TRAFFIC");
-          resolve();
+          try {
+            await createFunctionAndCheckSuccess("campion14");
+            await createCloudFrontAndCheckSuccess();
+            await createAllTablesAndCheckSuccess();
+            resolve();
+          } catch (e) {
+            clearInterval(deployId);
+            console.log(`\n${e.message}`);
+
+            return;
+          }
         }, 10000);
       });
     });
-
     clearInterval(deployId);
-    configGoodbye();
   } catch (e) {
     clearInterval(deployId);
-    console.log(`\n${e.message}`);
+    throw e;
   }
 };
 
@@ -115,8 +161,13 @@ const setup = async () => {
       : await promptUser();
 
   if (userInput.accessKeyId && userInput.secretAccessKey) {
-    writeToFile(userInput);
-    await deploy();
+    try {
+      writeToFile(userInput);
+      await deploy();
+      configGoodbye();
+    } catch (e) {
+      console.log(`\n${e.message}`);
+    }
     return;
   }
 
