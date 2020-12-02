@@ -9,6 +9,19 @@ const getMethodFromRequest = (request) =>
 const getBodyFromRequest = (request) =>
   request.Records ? request.Records[0].cf.request.body.data : '';
 
+const getHeadersFromRequest = (request) => {
+  const headersObj = request.Records[0].cf.request.headers;
+  const headerKeys = Object.keys(headersObj);
+  const formattedHeaders = {};
+
+  headerKeys.forEach((key) => {
+    const header = headersObj[key][0];
+    formattedHeaders[header['key']] = header['value'];
+  });
+
+  return formattedHeaders;
+};
+
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
   const service = await dbConfigRead('SERVICES_CONFIG', serviceId);
@@ -156,6 +169,7 @@ async function processRequest(service, request) {
   let timeoutId;
   const method = getMethodFromRequest(request);
   const body = getBodyFromRequest(request);
+  const headers = getHeadersFromRequest(request);
 
   const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
@@ -169,7 +183,7 @@ async function processRequest(service, request) {
 
   const fetchPromise = new Promise((resolve, reject) => {
     const req = https.request(
-      Object.assign({}, url.parse(service.ID), { method }),
+      Object.assign({}, url.parse(service.ID), { method, headers }),
       (res) => {
         let body, failure, key;
         res.on('data', (data) => {
