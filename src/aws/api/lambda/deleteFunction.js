@@ -1,4 +1,6 @@
 const { lambda } = require('../sdk');
+const configDir = require('../../utils/configDir');
+require('dotenv').config({ path: `${configDir}/.env` });
 
 const deleteFunction = () => {
   const params = {
