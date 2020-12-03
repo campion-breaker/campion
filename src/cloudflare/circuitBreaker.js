@@ -29,7 +29,7 @@ async function handleRequest(request) {
     return new Response('Circuit is half-open', { status: 504 });
   }
 
-  const response = await processRequest(service);
+  const response = await processRequest(service, request);
   const responseTime = Date.now();
 
   await updateCircuitState(service, serviceId, response);
@@ -62,7 +62,25 @@ function canRequestProceed(service) {
   return randNum === 1;
 }
 
-async function processRequest(service) {
+function getHeaders(request) {
+  const keys = [...request.headers.keys()];
+  const values = [...request.headers.values()];
+  const headers = {};
+
+  for (let i = 0; i < keys.length; i++) {
+    headers[keys[i]] = values[i];
+  }
+
+  return headers;
+}
+
+async function processRequest(service, request) {
+  const method = request.method;
+  const body = await request.text();
+  const headers = getHeaders(request);
+  const fetchObj = ['GET', 'HEAD'].includes(method)
+    ? { method, headers }
+    : { method, headers, body };
   let timeoutId;
 
   const timeoutPromise = new Promise((resolutionFunc) => {
@@ -75,7 +93,7 @@ async function processRequest(service) {
     }, service.MAX_LATENCY);
   });
 
-  const fetchPromise = fetch(service.ID).then(async (data) => {
+  const fetchPromise = fetch(service.ID, fetchObj).then(async (data) => {
     clearTimeout(timeoutId);
 
     let failure = false;
