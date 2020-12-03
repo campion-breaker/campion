@@ -170,7 +170,7 @@ const newResponse = (body = "", status = 200, headers = {}) => {
   return {
     status,
     headers,
-    body: JSON.stringify(body),
+    body,
   };
 };
 
