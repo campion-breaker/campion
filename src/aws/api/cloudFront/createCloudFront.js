@@ -55,8 +55,8 @@ const createCloudFront = () => {
         TargetOriginId: 'campion',
         ViewerProtocolPolicy: 'allow-all',
         AllowedMethods: {
-          Items: ['GET', 'HEAD'],
-          Quantity: 2,
+          Items: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'POST', 'PATCH', 'DELETE'],
+          Quantity: 7,
         },
         MinTTL: 0,
         ForwardedValues: {
