@@ -76,7 +76,6 @@ const getHeadersFromRequest = (request) => {
       key.includes('host')
     )
       return;
-    return;
     formattedHeaders[header['key']] = header['value'];
   });
 
@@ -100,11 +99,7 @@ async function flipState(service, newState) {
   };
 
   try {
-    const data = await documentClient
-      .update(params, (err, data) => {
-        console.log(data);
-      })
-      .promise();
+    const data = await documentClient.update.promise();
     return { statusCode: 200 };
   } catch (e) {
     return {
@@ -191,7 +186,6 @@ async function processRequest(service, request) {
   const method = getMethodFromRequest(request);
   const body = getBodyFromRequest(request);
   const headers = getHeadersFromRequest(request);
-
   const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
       resolutionFunc({
@@ -207,15 +201,19 @@ async function processRequest(service, request) {
       Object.assign({}, url.parse(service.ID), { method, headers }),
       (res) => {
         let body, failure, key;
+
         res.on('data', (data) => {
-          clearTimeout(timeoutId);
           failure = false;
           key = '@SUCCESS_' + service.ID + Date.now();
           body = data.toString();
         });
 
-        res.on('error', reject);
+        res.on('error', () => {
+          reject;
+        });
+        
         res.on('end', () => {
+          clearTimeout(timeoutId);
           if (res.statusCode >= 500) {
             failure = true;
             key = '@SERVICE_FAILURE_' + service.ID + Date.now();
@@ -368,6 +366,8 @@ exports.handler = async (event, context, callback) => {
       delete response.headers[key];
     }
   });
-
+  
+  context.callbackWaitsForEmptyEventLoop = false
   return callback(null, response);
 };
+
