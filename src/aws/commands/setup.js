@@ -3,12 +3,12 @@ const prompt = require("prompts");
 const loadingBar = require("../../cloudflare/utils/loadingBar");
 const configDir = require("../utils/configDir");
 require("dotenv").config({ path: `${configDir}/.env` });
-const createRole = require("../api/iam/createRole");
-const attachRolePolicy = require("../api/iam/attachRolePolicy");
 const writeToEnv = require("../utils/writeToEnv");
 const createFunction = require("../api/lambda/createFunction");
 const createTable = require("../api/dynamoDB/createTable");
 const createCloudFront = require("../api/cloudFront/createCloudFront");
+const createRole = require("../api/iam/createRole");
+const attachRolePolicy = require("../api/iam/attachRolePolicy");
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -102,22 +102,27 @@ const createCloudFrontAndCheckSuccess = async () => {
 const deploy = async () => {
   const deployId = loadingBar("Deploying ");
   try {
-    await createRole("campion").then(async (data) => {
-      await attachRolePolicy(
-        "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
-        "campion"
-      );
-      await attachRolePolicy(
-        "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
-        "campion"
-      );
-      await attachRolePolicy(
-        "arn:aws:iam::aws:policy/CloudFrontFullAccess",
-        "campion"
-      );
-      writeToEnv("AWS_ROLE_ARN", data.Role.Arn);
-      writeToEnv("AWS_ROLE_NAME", data.Role.RoleName);
-    });
+    if (!process.env.AWS_ROLE_ARN && !process.env.AWS_ROLE_NAME) {
+      await createRole("campion").then(async (data) => {
+        await attachRolePolicy(
+          "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
+          "campion"
+        );
+        await attachRolePolicy(
+          "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+          "campion"
+        );
+        await attachRolePolicy(
+          "arn:aws:iam::aws:policy/CloudFrontFullAccess",
+          "campion"
+        );
+        writeToEnv("AWS_ROLE_ARN", data.Role.Arn);
+        writeToEnv("AWS_ROLE_NAME", data.Role.RoleName);
+      });
+    } else {
+      writeToEnv("AWS_ROLE_NAME", process.env.AWS_ROLE_NAME);
+      writeToEnv("AWS_ROLE_ARN", process.env.AWS_ROLE_ARN);
+    }
 
     await new Promise(async (resolve) => {
       setTimeout(async () => {
@@ -132,18 +137,18 @@ const deploy = async () => {
             writeToEnv("AWS_TRAFFIC", process.env.AWS_TRAFFIC);
           }
 
-          if (!process.env.AWS_CLOUDFRONT_ID && !process.env.AWS_DOMAIN_NAME) {
-            await createCloudFrontAndCheckSuccess();
-          } else {
-            writeToEnv("AWS_CLOUDFRONT_ID", process.env.AWS_CLOUDFRONT_ID);
-            writeToEnv("AWS_DOMAIN_NAME", process.env.AWS_DOMAIN_NAME);
-          }
-
           if (!process.env.AWS_FUNCTION_NAME || !process.env.AWS_LAMBDA_ARN) {
             await createFunctionAndCheckSuccess("campion14");
           } else {
             writeToEnv("AWS_FUNCTION_NAME", process.env.AWS_FUNCTION_NAME);
             writeToEnv("AWS_LAMBDA_ARN", process.env.AWS_LAMBDA_ARN);
+          }
+
+          if (!process.env.AWS_CLOUDFRONT_ID && !process.env.AWS_DOMAIN_NAME) {
+            await createCloudFrontAndCheckSuccess();
+          } else {
+            writeToEnv("AWS_CLOUDFRONT_ID", process.env.AWS_CLOUDFRONT_ID);
+            writeToEnv("AWS_DOMAIN_NAME", process.env.AWS_DOMAIN_NAME);
           }
 
           resolve();
