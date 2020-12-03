@@ -74,6 +74,7 @@ const getHeadersFromRequest = (request) => {
     formattedHeaders[header['key']] = header['value'];
   });
 
+  delete formattedHeaders.Host;
   return formattedHeaders;
 };
 
