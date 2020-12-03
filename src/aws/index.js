@@ -73,9 +73,10 @@ const getHeadersFromRequest = (request) => {
     if (
       key.includes('sec-') ||
       key.includes('accept-encoding') ||
-      key === 'Host'
+      key.includes('host')
     )
       return;
+    return;
     formattedHeaders[header['key']] = header['value'];
   });
 
