@@ -286,7 +286,7 @@ async function updateCircuitState(service, serviceId, response) {
   ) {
     await putDB("REQUEST_LOG", {
       ID: response.key,
-      TIME: (Date.now() + service.ERROR_TIMEOUT) / 60,
+      TIME: (Date.now() + service.ERROR_TIMEOUT * 1000) / 1000,
     });
   }
 
