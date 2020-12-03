@@ -21,7 +21,7 @@ async function handleRequest(request) {
   }
 
   if (service.CIRCUIT_STATE === "OPEN") {
-    await setStateWhenOpen(service, serviceId);
+    await setStateWhenOpen(service);
     if (service.CIRCUIT_STATE === "OPEN") {
       await logRequestMetrics(receivedTime, service);
       return newResponse("Circuit is open", 504);
@@ -36,7 +36,7 @@ async function handleRequest(request) {
   const response = await processRequest(service, request);
   const responseTime = Date.now();
 
-  await updateCircuitState(service, serviceId, response);
+  await updateCircuitState(service, response);
   await logRequestMetrics(receivedTime, service, responseTime, response.status);
 
   return newResponse(response.body, response.status, response.headers);
@@ -190,7 +190,7 @@ async function processRequest(service, request) {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
-        kvKey: "@NETWORK_FAILURE_" + Date.now(),
+        key: "@NETWORK_FAILURE_" + service.ID + "_" + Date.now(),
         status: 522,
       });
     }, service.MAX_LATENCY);
@@ -202,17 +202,17 @@ async function processRequest(service, request) {
       (res) => {
         let body, failure, key;
 
-        res.setEncoding('utf8');
-        res.on("data", (data) => body = data.toString());
+        res.setEncoding("utf8");
+        res.on("data", (data) => (body = data.toString()));
 
         res.on("end", () => {
           clearTimeout(timeoutId);
           if (res.statusCode >= 400) {
             failure = true;
-            key = "@SERVICE_FAILURE_" + service.ID + Date.now();
+            key = "@SERVICE_FAILURE_" + service.ID + "_" + Date.now();
           } else {
             failure = false;
-            key = "@SUCCESS_" + service.ID + Date.now();            
+            key = "@SUCCESS_" + service.ID + "_" + Date.now();
           }
 
           resolve({
@@ -234,8 +234,8 @@ async function processRequest(service, request) {
   });
 }
 
-async function setStateWhenClosed(service, serviceId) {
-  const { serviceFailures, networkFailures } = await requestLogCount(serviceId);
+async function setStateWhenClosed(service) {
+  const { serviceFailures, networkFailures } = await requestLogCount(service);
 
   if (
     serviceFailures >= service.SERVICE_FAILURE_THRESHOLD ||
@@ -245,7 +245,7 @@ async function setStateWhenClosed(service, serviceId) {
   }
 }
 
-async function setStateWhenOpen(service, serviceId) {
+async function setStateWhenOpen(service) {
   const now = Date.now();
   const oldDate = service.UPDATED_TIME;
   const differenceInSecs = (now - oldDate) / 1000;
@@ -255,9 +255,9 @@ async function setStateWhenOpen(service, serviceId) {
   }
 }
 
-async function setStateWhenHalfOpen(service, serviceId) {
+async function setStateWhenHalfOpen(service) {
   const { successes, serviceFailures, networkFailures } = await requestLogCount(
-    serviceId
+    service
   );
 
   if (successes >= service.SUCCESS_THRESHOLD) {
@@ -270,7 +270,7 @@ async function setStateWhenHalfOpen(service, serviceId) {
   }
 }
 
-async function updateCircuitState(service, serviceId, response) {
+async function updateCircuitState(service, response) {
   if (
     response.failure ||
     (service.CIRCUIT_STATE === "HALF-OPEN" && !response.failure)
@@ -283,10 +283,10 @@ async function updateCircuitState(service, serviceId, response) {
 
   switch (service.CIRCUIT_STATE) {
     case "CLOSED":
-      await setStateWhenClosed(service, serviceId);
+      await setStateWhenClosed(service);
       break;
     case "HALF-OPEN":
-      await setStateWhenHalfOpen(service, serviceId);
+      await setStateWhenHalfOpen(service);
       break;
   }
 }
@@ -305,9 +305,14 @@ async function logEventStateChange(service, newState) {
   await putDB("EVENTS", stateChangeEntry);
 }
 
-async function requestLogCount(serviceId) {
+async function requestLogCount(service) {
   const list = await dbFailureRead("REQUEST_LOG");
-  const log = list.filter((obj) => obj.ID.includes(serviceId));
+  const log = list.filter(
+    (obj) =>
+      obj.ID.includes(service.ID) &&
+      obj.TIME * 1000 > Date.now() - service.ERROR_TIMEOUT * 1000
+  );
+  console.log(log);
   const serviceFailures = log.filter((obj) =>
     obj.ID.includes("@SERVICE_FAILURE_")
   ).length;
@@ -352,17 +357,17 @@ const blacklistedHeaders = [
 const readOnlyHeaders = ["content-length", "host", "transfer-encoding", "via"];
 
 const fixHeaders = (response) => {
-  response.headers['access-control-allow-origin'] = "*";
-  response.headers['access-control-allow-methods'] = "*";
-  response.headers['access-control-max-age'] = "86400";
-  
+  response.headers["access-control-allow-origin"] = "*";
+  response.headers["access-control-allow-methods"] = "*";
+  response.headers["access-control-max-age"] = "86400";
+
   Object.keys(response.headers).forEach((key) => {
     response.headers[key] = [{ value: response.headers[key] }];
     if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key)) {
       delete response.headers[key];
     }
   });
-  
+
   return response;
 };
 
@@ -371,4 +376,3 @@ exports.handler = async (event, context, callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
   return callback(null, fixHeaders(response));
 };
-
