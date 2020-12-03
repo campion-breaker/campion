@@ -34,7 +34,6 @@ async function handleRequest(request) {
   }
 
   const response = await processRequest(service, request);
-  console.log('response', response);
   const responseTime = Date.now();
 
   await updateCircuitState(service, serviceId, response);
@@ -71,10 +70,15 @@ const getHeadersFromRequest = (request) => {
 
   headerKeys.forEach((key) => {
     const header = headersObj[key][0];
+    if (
+      key.includes('sec-') ||
+      key.includes('accept-encoding') ||
+      key === 'Host'
+    )
+      return;
     formattedHeaders[header['key']] = header['value'];
   });
 
-  delete formattedHeaders.Host;
   return formattedHeaders;
 };
 
