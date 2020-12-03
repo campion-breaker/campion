@@ -29,15 +29,9 @@ const configGoodbye = () => {
 const promptUser = async (accessKeyId, secretAccessKey) =>
   await prompt(questions(accessKeyId, secretAccessKey));
 
-const clearExistingIds = () => {
-  process.env.ROLE_ARN = "";
-};
-
 const writeToFile = ({ accessKeyId, secretAccessKey }) => {
   process.env.AWS_ACCESS_KEY_ID = accessKeyId;
   process.env.AWS_SECRET_KEY = secretAccessKey;
-
-  clearExistingIds();
 
   fs.writeFileSync(
     `${configDir}/.env`,
@@ -109,8 +103,6 @@ const deploy = async () => {
   const deployId = loadingBar("Deploying ");
   try {
     await createRole("campion").then(async (data) => {
-      writeToEnv("AWS_ROLE_ARN", data.Role.Arn);
-      writeToEnv("AWS_ROLE_NAME", data.Role.RoleName);
       await attachRolePolicy(
         "arn:aws:iam::aws:policy/AWSLambdaFullAccess",
         "campion"
@@ -123,23 +115,46 @@ const deploy = async () => {
         "arn:aws:iam::aws:policy/CloudFrontFullAccess",
         "campion"
       );
-
-      await new Promise(async (resolve) => {
-        setTimeout(async () => {
-          try {
-            await createFunctionAndCheckSuccess("campion14");
-            await createCloudFrontAndCheckSuccess();
-            await createAllTablesAndCheckSuccess();
-            resolve();
-          } catch (e) {
-            clearInterval(deployId);
-            console.log(`\n${e.message}`);
-
-            return;
-          }
-        }, 10000);
-      });
+      writeToEnv("AWS_ROLE_ARN", data.Role.Arn);
+      writeToEnv("AWS_ROLE_NAME", data.Role.RoleName);
     });
+
+    await new Promise(async (resolve) => {
+      setTimeout(async () => {
+        try {
+          if (!process.env.AWS_SERVICES_CONFIG && !process.env.AWS_REQUEST_LOG
+            && !process.env.AWS_EVENTS && !process.env.AWS_TRAFFIC) {
+            await createAllTablesAndCheckSuccess();
+          } else {
+            writeToEnv("AWS_SERVICES_CONFIG", process.env.AWS_SERVICES_CONFIG);
+            writeToEnv("AWS_REQUEST_LOG", process.env.AWS_REQUEST_LOG);
+            writeToEnv("AWS_EVENTS", process.env.AWS_EVENTS);
+            writeToEnv("AWS_TRAFFIC", process.env.AWS_TRAFFIC);
+          }
+
+          if (!process.env.AWS_CLOUDFRONT_ID && !process.env.AWS_DOMAIN_NAME) {
+            await createCloudFrontAndCheckSuccess();
+          } else {
+            writeToEnv("AWS_CLOUDFRONT_ID", process.env.AWS_CLOUDFRONT_ID);
+            writeToEnv("AWS_DOMAIN_NAME", process.env.AWS_DOMAIN_NAME);
+          }
+
+          if (!process.env.AWS_FUNCTION_NAME || !process.env.AWS_LAMBDA_ARN) {
+            await createFunctionAndCheckSuccess("campion14");
+          } else {
+            writeToEnv("AWS_FUNCTION_NAME", process.env.AWS_FUNCTION_NAME);
+            writeToEnv("AWS_LAMBDA_ARN", process.env.AWS_LAMBDA_ARN);
+          }
+
+          resolve();
+        } catch (e) {
+          clearInterval(deployId);
+          console.log(`\n${e.message}`);
+          return;
+        }
+      }, 10000);
+    });
+
     clearInterval(deployId);
   } catch (e) {
     clearInterval(deployId);
