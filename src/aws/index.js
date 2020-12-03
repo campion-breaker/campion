@@ -200,10 +200,11 @@ async function processRequest(service, request) {
     const req = https.request(
       Object.assign({}, url.parse(service.ID), { method, headers }),
       (res) => {
-        let body, failure, key;
+        let body = '';
+        let failure, key;
 
         res.setEncoding("utf8");
-        res.on("data", (data) => (body = data.toString()));
+        res.on("data", (data) => (body += data));
 
         res.on("end", () => {
           clearTimeout(timeoutId);
@@ -226,6 +227,7 @@ async function processRequest(service, request) {
       }
     );
 
+    req.write(body);
     req.end();
   });
 
