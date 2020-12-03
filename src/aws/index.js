@@ -170,7 +170,7 @@ const newResponse = (body = "", status = 200, headers = {}) => {
   return {
     status,
     headers,
-    body,
+    body: JSON.stringify(body),
   };
 };
 
@@ -202,27 +202,23 @@ async function processRequest(service, request) {
       (res) => {
         let body, failure, key;
 
-        res.on("data", (data) => {
-          failure = false;
-          key = "@SUCCESS_" + service.ID + Date.now();
-          body = data.toString();
-        });
-
-        res.on("error", () => {
-          reject;
-        });
+        res.setEncoding('utf8');
+        res.on("data", (data) => body = data.toString());
 
         res.on("end", () => {
           clearTimeout(timeoutId);
-          if (res.statusCode >= 500) {
+          if (res.statusCode >= 400) {
             failure = true;
             key = "@SERVICE_FAILURE_" + service.ID + Date.now();
+          } else {
+            failure = false;
+            key = "@SUCCESS_" + service.ID + Date.now();            
           }
 
           resolve({
             status: res.statusCode,
             headers: res.headers,
-            body: body,
+            body,
             failure,
             key,
           });
@@ -230,11 +226,6 @@ async function processRequest(service, request) {
       }
     );
 
-    req.on("error", (e) => {
-      console.error(e);
-    });
-
-    req.write(body);
     req.end();
   });
 
@@ -284,7 +275,10 @@ async function updateCircuitState(service, serviceId, response) {
     response.failure ||
     (service.CIRCUIT_STATE === "HALF-OPEN" && !response.failure)
   ) {
-    await putDB("REQUEST_LOG", { ID: response.key });
+    await putDB("REQUEST_LOG", {
+      ID: response.key,
+      TIME: (Date.now() + service.ERROR_TIMEOUT * 1000) / 1000,
+    });
   }
 
   switch (service.CIRCUIT_STATE) {
@@ -357,16 +351,24 @@ const blacklistedHeaders = [
 
 const readOnlyHeaders = ["content-length", "host", "transfer-encoding", "via"];
 
-exports.handler = async (event, context, callback) => {
-  const response = await handleRequest(event);
-
+const fixHeaders = (response) => {
+  response.headers['access-control-allow-origin'] = "*";
+  response.headers['access-control-allow-methods'] = "*";
+  response.headers['access-control-max-age'] = "86400";
+  
   Object.keys(response.headers).forEach((key) => {
     response.headers[key] = [{ value: response.headers[key] }];
     if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key)) {
       delete response.headers[key];
     }
   });
-
-  context.callbackWaitsForEmptyEventLoop = false;
-  return callback(null, response);
+  
+  return response;
 };
+
+exports.handler = async (event, context, callback) => {
+  const response = await handleRequest(event);
+  context.callbackWaitsForEmptyEventLoop = false;
+  return callback(null, fixHeaders(response));
+};
+

@@ -21,42 +21,22 @@ const createCloudFront = () => {
         ],
         Quantity: 1,
       },
-      CacheBehaviors: {
-        Quantity: 1,
-        Items: [
-          {
-            PathPattern: '*',
-            TargetOriginId: 'campion',
-            ViewerProtocolPolicy: 'allow-all',
-            LambdaFunctionAssociations: {
-              Quantity: 1,
-              Items: [
-                {
-                  EventType: 'viewer-request',
-                  LambdaFunctionARN: process.env.AWS_LAMBDA_ARN,
-                  IncludeBody: true,
-                },
-              ],
-            },
-            MinTTL: 0,
-            ForwardedValues: {
-              Cookies: {
-                Forward: `all`,
-                WhitelistedNames: {
-                  Quantity: 0,
-                },
-              },
-              QueryString: true,
-            },
-          },
-        ],
-      },
       DefaultCacheBehavior: {
         TargetOriginId: 'campion',
         ViewerProtocolPolicy: 'allow-all',
         AllowedMethods: {
           Items: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'POST', 'PATCH', 'DELETE'],
           Quantity: 7,
+        },
+        LambdaFunctionAssociations: {
+          Quantity: 1,
+          Items: [
+            {
+              EventType: 'viewer-request',
+              LambdaFunctionARN: process.env.AWS_LAMBDA_ARN,
+              IncludeBody: true,
+            },
+          ],
         },
         MinTTL: 0,
         ForwardedValues: {
