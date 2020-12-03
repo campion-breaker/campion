@@ -28,7 +28,6 @@ const questions = (state) => [
     name: 'ID',
     message: 'Enter the service URL: ',
     initial: state.ID || '',
-    validate: async (url) => await validateUrl(url),
     format: (url) => formatUrl(url),
   },
   {
@@ -87,18 +86,6 @@ const questions = (state) => [
     initial: state.SUCCESS_THRESHOLD || 2,
   },
 ];
-
-const validateUrl = async (url) => {
-  try {
-    const data = await fetch(url);
-    return (
-      (data.status >= 200 && data.status <= 299) ||
-      (data.status >= 500 && data.status <= 599)
-    );
-  } catch (e) {
-    return 'Invalid url endpoint.';
-  }
-};
 
 const setServiceConfig = async (state) => {
   const newState = await prompt(questions(state));
