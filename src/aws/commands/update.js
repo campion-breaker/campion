@@ -35,7 +35,7 @@ const selectService = async (services) => {
 
 const buildConfigChangeKey = (service) => {
   const serviceCopy = { ...service };
-  serviceCopy.ID = service.ID + Date.now();
+  serviceCopy.ID = service.ID + "_" + Date.now();
 
   return {
     ...serviceCopy,
