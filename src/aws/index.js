@@ -284,7 +284,10 @@ async function updateCircuitState(service, serviceId, response) {
     response.failure ||
     (service.CIRCUIT_STATE === "HALF-OPEN" && !response.failure)
   ) {
-    await putDB("REQUEST_LOG", { ID: response.key });
+    await putDB("REQUEST_LOG", {
+      ID: response.key,
+      TIME: Date.now() + service.ERROR_TIMEOUT,
+    });
   }
 
   switch (service.CIRCUIT_STATE) {
