@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/static/css/main.0e873d33.chunk.css",
+    "main.js": "/static/js/main.986c37bd.chunk.js",
+    "main.js.map": "/static/js/main.986c37bd.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.d7d76b33.js",
+    "runtime-main.js.map": "/static/js/runtime-main.d7d76b33.js.map",
+    "static/js/2.5f6d4db1.chunk.js": "/static/js/2.5f6d4db1.chunk.js",
+    "static/js/2.5f6d4db1.chunk.js.map": "/static/js/2.5f6d4db1.chunk.js.map",
+    "static/js/3.b4a4f64a.chunk.js": "/static/js/3.b4a4f64a.chunk.js",
+    "static/js/3.b4a4f64a.chunk.js.map": "/static/js/3.b4a4f64a.chunk.js.map",
+    "index.html": "/index.html",
+    "static/css/main.0e873d33.chunk.css.map": "/static/css/main.0e873d33.chunk.css.map",
+    "static/js/2.5f6d4db1.chunk.js.LICENSE.txt": "/static/js/2.5f6d4db1.chunk.js.LICENSE.txt",
+    "static/media/logo-campion.378189a0.png": "/static/media/logo-campion.378189a0.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.d7d76b33.js",
+    "static/js/2.5f6d4db1.chunk.js",
+    "static/css/main.0e873d33.chunk.css",
+    "static/js/main.986c37bd.chunk.js"
+  ]
+}

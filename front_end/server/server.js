@@ -13,10 +13,10 @@ const port = 7777;
 
 app.use(cors());
 
-app.use(express.static(path.resolve(__dirname + '/../app/build/')));
+app.use(express.static(path.resolve(__dirname + '/../app/public/')));
 
 app.get('/', (_, res) => {
-  res.sendFile(path.resolve(__dirname + '/../app/build/index.html'));
+  res.sendFile(path.resolve(__dirname + '/../app/public/index.html'));
 });
 
 app.get('/events', async (req, res) => {
