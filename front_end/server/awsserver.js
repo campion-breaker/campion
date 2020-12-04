@@ -39,7 +39,9 @@ app.get('/endpoints', async (req, res) => {
 
 app.get('/subdomain', (req, res) => {
   res.set('Content-Type', 'application/json');
-  res.send(JSON.stringify('https://' + process.env.AWS_DOMAIN_NAME));
+  res.send(
+    JSON.stringify('https://' + process.env.AWS_DOMAIN_NAME + '/service?id=')
+  );
 });
 
 app.listen(port, host, () => {
