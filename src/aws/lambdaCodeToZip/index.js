@@ -2,6 +2,7 @@ const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient();
 const https = require("https");
 const url = require("url");
+const fetch = require("node-fetch");
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
@@ -182,59 +183,99 @@ function canRequestProceed(service) {
 }
 
 async function processRequest(service, request) {
-  let timeoutId;
   const method = getMethodFromRequest(request);
-  const body = getBodyFromRequest(request);
+  const body = await getBodyFromRequest(request);
   const headers = getHeadersFromRequest(request);
+  const fetchObj = ['GET', 'HEAD'].includes(method)
+    ? { method, headers }
+    : { method, headers, body };
+  let timeoutId;
+
   const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
-        key: "@NETWORK_FAILURE_" + service.ID + "_" + Date.now(),
+        key: '@NETWORK_FAILURE_' + service.ID + Date.now(),
         status: 522,
       });
     }, service.MAX_LATENCY);
   });
 
-  const fetchPromise = new Promise((resolve, reject) => {
-    const req = https.request(
-      Object.assign({}, url.parse(service.ID), { method, headers }),
-      (res) => {
-        let body = '';
-        let failure, key;
+  const fetchPromise = fetch(service.ID, fetchObj).then(async (data) => {
+    clearTimeout(timeoutId);
 
-        res.setEncoding("utf8");
-        res.on("data", (data) => (body += data));
+    let failure = false;
+    let key = '@SUCCESS_' + service.ID + Date.now();
+    const body = data.body;
+    const headers = data.headers;
+    const status = data.status;
 
-        res.on("end", () => {
-          clearTimeout(timeoutId);
-          if (res.statusCode >= 400) {
-            failure = true;
-            key = "@SERVICE_FAILURE_" + service.ID + "_" + Date.now();
-          } else {
-            failure = false;
-            key = "@SUCCESS_" + service.ID + "_" + Date.now();
-          }
+    if (Number(status) >= 500) {
+      failure = true;
+      key = '@SERVICE_FAILURE_' + service.ID + Date.now();
+    }
 
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            body,
-            failure,
-            key,
-          });
-        });
-      }
-    );
-
-    req.write(body);
-    req.end();
+    return { body, headers, failure, key, status };
   });
 
   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
     return value;
   });
 }
+
+// async function processRequest(service, request) {
+//   let timeoutId;
+//   const method = getMethodFromRequest(request);
+//   const body = getBodyFromRequest(request);
+//   const headers = getHeadersFromRequest(request);
+//   const timeoutPromise = new Promise((resolutionFunc) => {
+//     timeoutId = setTimeout(() => {
+//       resolutionFunc({
+//         failure: true,
+//         key: "@NETWORK_FAILURE_" + service.ID + "_" + Date.now(),
+//         status: 522,
+//       });
+//     }, service.MAX_LATENCY);
+//   });
+//   const fetchPromise = new Promise((resolve, reject) => {
+//     const req = https.request(
+//       Object.assign({}, url.parse(service.ID), { method, headers }),
+//       (res) => {
+//         let body = '';
+//         let failure, key;
+
+//         res.setEncoding("utf8");
+//         res.on("data", (data) => (body += data));
+
+//         res.on("end", () => {
+//           clearTimeout(timeoutId);
+//           if (res.statusCode >= 400) {
+//             failure = true;
+//             key = "@SERVICE_FAILURE_" + service.ID + "_" + Date.now();
+//           } else {
+//             failure = false;
+//             key = "@SUCCESS_" + service.ID + "_" + Date.now();
+//           }
+
+//           resolve({
+//             status: res.statusCode,
+//             headers: res.headers,
+//             body,
+//             failure,
+//             key,
+//           });
+//         });
+//       }
+//     );
+
+//     req.write(body);
+//     req.end();
+//   });
+
+//   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
+//     return value;
+//   });
+// }
 
 async function setStateWhenClosed(service) {
   const { serviceFailures, networkFailures } = await requestLogCount(service);
