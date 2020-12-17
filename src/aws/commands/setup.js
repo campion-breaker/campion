@@ -9,6 +9,7 @@ const createTable = require('../api/dynamoDB/createTable');
 const createCloudFront = require('../api/cloudFront/createCloudFront');
 const createRole = require('../api/iam/createRole');
 const attachRolePolicy = require('../api/iam/attachRolePolicy');
+const setupMessage = require('../../utils/setupMessage');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(configDir)) {
@@ -172,6 +173,7 @@ const deploy = async () => {
 };
 
 const setup = async () => {
+  setupMessage();
   createHiddenCampionDir();
 
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID;

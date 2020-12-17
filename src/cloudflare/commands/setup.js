@@ -6,6 +6,7 @@ const prompt = require('prompts');
 const absolutePath = require('../utils/configDir');
 const loadingBar = require('../utils/loadingBar');
 const getWorkersDevSubdomain = require('../api/getWorkersDevSubdomain');
+const setupMessage = require('../../utils/setupMessage');
 
 const createHiddenCampionDir = () => {
   if (!fs.existsSync(absolutePath)) {
@@ -75,6 +76,7 @@ const deploy = async () => {
 };
 
 const setup = async () => {
+  setupMessage();
   createHiddenCampionDir();
 
   const apiKey = process.env.APIKEY;
