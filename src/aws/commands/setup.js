@@ -143,7 +143,7 @@ const deploy = async () => {
           }
 
           if (!process.env.AWS_FUNCTION_NAME || !process.env.AWS_LAMBDA_ARN) {
-            await createFunctionAndCheckSuccess('campion15');
+            await createFunctionAndCheckSuccess('campion17');
           } else {
             writeToEnv('AWS_FUNCTION_NAME', process.env.AWS_FUNCTION_NAME);
             writeToEnv('AWS_LAMBDA_ARN', process.env.AWS_LAMBDA_ARN);

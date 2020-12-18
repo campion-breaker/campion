@@ -1,4 +1,4 @@
-const { iam } = require('../sdk');
+const sdk = require('../sdk');
 
 const attachRolePolicy = (policyArn, roleName) => {
   const params = {
@@ -6,7 +6,7 @@ const attachRolePolicy = (policyArn, roleName) => {
     RoleName: roleName,
   };
 
-  return iam.attachRolePolicy(params).promise();
+  return sdk().iam.attachRolePolicy(params).promise();
 };
 
 module.exports = attachRolePolicy;

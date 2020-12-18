@@ -1,4 +1,4 @@
-const { ddb } = require("../sdk");
+const sdk = require("../sdk");
 
 async function putToTable(tableName, item) {
   const params = {
@@ -6,7 +6,7 @@ async function putToTable(tableName, item) {
     Item: formatItem(item),
   };
 
-  return ddb.putItem(params).promise();
+  return sdk().ddb.putItem(params).promise();
 }
 
 const formatItem = (item) => {

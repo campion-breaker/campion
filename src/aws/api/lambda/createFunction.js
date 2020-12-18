@@ -1,4 +1,4 @@
-const { lambda } = require('../sdk');
+const sdk = require('../sdk');
 const fs = require('fs');
 
 const createFunction = (name) => {
@@ -16,7 +16,7 @@ const createFunction = (name) => {
     },
   };
 
-  return lambda.createFunction(params).promise();
+  return sdk().lambda.createFunction(params).promise();
 };
 
 module.exports = createFunction;

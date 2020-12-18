@@ -1,4 +1,4 @@
-const { ddb } = require('../sdk');
+const sdk = require('../sdk');
 
 const createTable = (TableName) => {
   const params = {
@@ -8,7 +8,7 @@ const createTable = (TableName) => {
     BillingMode: 'PAY_PER_REQUEST',
   };
 
-  return ddb.createTable(params).promise();
+  return sdk().ddb.createTable(params).promise();
 };
 
 module.exports = createTable;
