@@ -1,4 +1,4 @@
-const { lambda } = require('../sdk');
+const sdk = require('../sdk');
 const configDir = require('../../utils/configDir');
 require('dotenv').config({ path: `${configDir}/.env` });
 
@@ -7,7 +7,7 @@ const deleteFunction = () => {
     FunctionName: process.env.AWS_FUNCTION_NAME,
   };
 
-  return lambda.deleteFunction(params).promise();
+  return sdk().lambda.deleteFunction(params).promise();
 };
 
 module.exports = deleteFunction;

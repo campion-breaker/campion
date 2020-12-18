@@ -1,4 +1,4 @@
-const { iam } = require("../sdk");
+const sdk = require("../sdk");
 const configDir = require("../../utils/configDir");
 require("dotenv").config({ path: `${configDir}/.env` });
 
@@ -8,7 +8,7 @@ const detachRolePolicy = (PolicyArn) => {
     RoleName: process.env.AWS_ROLE_NAME,
   };
 
-  return iam.detachRolePolicy(params).promise();
+  return sdk().iam.detachRolePolicy(params).promise();
 };
 
 module.exports = detachRolePolicy;

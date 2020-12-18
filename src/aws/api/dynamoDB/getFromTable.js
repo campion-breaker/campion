@@ -1,4 +1,4 @@
-const { ddb } = require('../sdk');
+const sdk = require('../sdk')();
 
 const formatItem = (item) => {
   const result = {};
@@ -16,7 +16,7 @@ async function getFromTable(tableName) {
 
   const result = [];
   try {
-    const data = await ddb.scan(params).promise();
+    const data = await sdk().ddb.scan(params).promise();
     data.Items.forEach((item) => result.push(formatItem(item)));
   } catch (e) {
     console.log(e);

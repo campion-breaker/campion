@@ -1,4 +1,4 @@
-const { iam } = require("../sdk");
+const sdk = require("../sdk");
 
 const createRole = (roleName) => {
   const policy = {
@@ -19,7 +19,7 @@ const createRole = (roleName) => {
     RoleName: roleName,
   };
 
-  return iam.createRole(params).promise();
+  return sdk().iam.createRole(params).promise();
 };
 
 module.exports = createRole;

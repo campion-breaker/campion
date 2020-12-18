@@ -1,11 +1,11 @@
-const { iam } = require("../sdk");
+const sdk = require("../sdk");
 
 const deleteRole = (RoleName) => {
   const params = {
     RoleName,
   };
 
-  return iam.deleteRole(params).promise();
+  return sdk().iam.deleteRole(params).promise();
 };
 
 module.exports = deleteRole;

@@ -1,4 +1,4 @@
-const { ddb } = require("../sdk");
+const sdk = require("../sdk");
 
 async function deleteFromTable(tableName, items) {
   let itemsCopy = [...[items].flat()];
@@ -28,7 +28,7 @@ async function deleteFromTable(tableName, items) {
       }
     };
 
-    promises.push(ddb.batchWriteItem(params).promise());
+    promises.push(sdk().ddb.batchWriteItem(params).promise());
   };
 
   return Promise.all(promises);

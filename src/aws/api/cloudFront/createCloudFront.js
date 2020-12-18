@@ -1,4 +1,4 @@
-const { cloudFront } = require('../sdk');
+const sdk = require('../sdk');
 const configDir = require('../../utils/configDir');
 require('dotenv').config({ path: `${configDir}/.env` });
 
@@ -53,7 +53,7 @@ const createCloudFront = () => {
     },
   };
 
-  return cloudFront.createDistribution(params).promise();
+  return sdk().cloudFront.createDistribution(params).promise();
 };
 
 module.exports = createCloudFront;
