@@ -5,8 +5,8 @@
 <p align="center">An edge-based circuit breaking middleware</p>
 
 [![campion](https://img.shields.io/badge/campion-case%20study-orange)](https://campion-breaker.github.io/)
-![license](https://img.shields.io/badge/license-MIT-orange)
-![build](https://img.shields.io/badge/build-passing-brightgreen)
+[![license](https://img.shields.io/badge/license-MIT-orange)](https://github.com/campion-breaker/campion/edit/main/README.md)
+[![build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/campion-breaker/campion/edit/main/README.md)
 
 ## What Does it Do?
 Campion is an edge-based serverless framework for implementing circuit-breaking functionality for synchronously called external services. It gives engineers the peace of mind that should their synchronously called services fail, a failure is returned immediately, thereby sheltering their system from cascading failures, giving their failed services time to recover, and providing their end user with a better experience.
