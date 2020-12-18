@@ -240,9 +240,9 @@ async function setStateWhenClosed(service) {
 async function setStateWhenOpen(service) {
   const now = Date.now();
   const oldDate = service.UPDATED_TIME;
-  const differenceInSecs = (now - oldDate) / 1000;
+  const differenceInMS = (now - oldDate);
 
-  if (differenceInSecs >= service.ERROR_TIMEOUT) {
+  if (differenceInMS >= service.ERROR_TIMEOUT) {
     await flipState(service, "HALF-OPEN");
   }
 }
@@ -269,7 +269,7 @@ async function updateCircuitState(service, response) {
   ) {
     await putDB("REQUEST_LOG", {
       ID: response.key,
-      TIME: (Date.now() + service.ERROR_TIMEOUT * 1000) / 1000,
+      TIME: (Date.now() + service.ERROR_TIMEOUT) / 1000,
     });
   }
 
@@ -302,7 +302,7 @@ async function requestLogCount(service) {
   const log = list.filter(
     (obj) =>
       obj.ID.includes(service.ID) &&
-      obj.TIME * 1000 > Date.now() - service.ERROR_TIMEOUT * 1000
+      obj.TIME * 1000 > Date.now() - service.TIMESPAN
   );
 
   const serviceFailures = log.filter((obj) =>

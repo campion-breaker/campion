@@ -3,9 +3,9 @@ const sdk = require("../sdk");
 const deleteDistribution = async (Id) => {
   let e_tag;
   let disabled;
-
+  const cloudFront = sdk().cloudFront;
+  
   async function disableCloudfrontDistribution() {
-    const cloudFront = sdk().cloudFront;
     const previousDistributionConfig = await cloudFront
       .getDistributionConfig({
         Id,
