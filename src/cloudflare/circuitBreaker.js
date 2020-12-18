@@ -129,9 +129,9 @@ async function setStateWhenClosed(service, serviceId) {
 async function setStateWhenOpen(service, serviceId) {
   const now = Date.now();
   const oldDate = service.UPDATED_TIME;
-  const differenceInSecs = (now - oldDate) / 1000;
+  const differenceInMS = (now - oldDate); 
 
-  if (differenceInSecs >= service.ERROR_TIMEOUT) {
+  if (differenceInMS >= service.ERROR_TIMEOUT) {
     await flipCircuitState(serviceId, service, 'HALF-OPEN');
   }
 }
