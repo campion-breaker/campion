@@ -23,7 +23,7 @@ const configMsg = () => {
 
 const configGoodbye = () => {
   console.log(
-    "\nSetup complete. Run 'campion add' to add a new service endpoint."
+    "\nSetup complete. Run 'campionaws add' to add a new service endpoint."
   );
 };
 
