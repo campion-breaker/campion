@@ -47,8 +47,8 @@ const questions = (state) => [
     type: "number",
     name: "TIMESPAN",
     message:
-      "How far back (sec) should Campion look for failures (aka TIMESPAN)?",
-    initial: state.TIMESPAN || 60,
+      "How far back (ms) should Campion look for failures (aka TIMESPAN)?",
+    initial: state.TIMESPAN || 6000,
   },
   {
     type: "number",
@@ -68,8 +68,8 @@ const questions = (state) => [
     type: "number",
     name: "ERROR_TIMEOUT",
     message:
-      "After opening, how long (sec) should Campion wait until it begins sending test traffic?",
-    initial: state.ERROR_TIMEOUT || 60,
+      "After opening, how long (ms) should Campion wait until it begins sending test traffic?",
+    initial: state.ERROR_TIMEOUT || 6000,
   },
   {
     type: "number",
