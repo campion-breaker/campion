@@ -1,4 +1,4 @@
-![Campion](https://github.com/campion-breaker/campion/tree/main/public/images/campion-logo.png?raw=true)
+![Campion](https://github.com/campion-breaker/campion/blob/main/public/images/campion-logo.png)
 
 An edge-based circuit breaking middleware
 \
