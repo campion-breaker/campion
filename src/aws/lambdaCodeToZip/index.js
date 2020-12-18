@@ -1,7 +1,5 @@
 const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient();
-const https = require("https");
-const url = require("url");
 const fetch = require("node-fetch");
 
 async function handleRequest(request) {
