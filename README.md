@@ -17,7 +17,7 @@ Campion is an edge-based serverless framework for implementing circuit-breaking 
 
 ## Getting Started
 
-### Prerequesites
+### Prerequisites
 
 - Either a Cloudflare or an AWS account
 - npm installed
