@@ -2,6 +2,7 @@ const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient();
 const https = require("https");
 const url = require("url");
+const fetch = require("node-fetch");
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
@@ -58,7 +59,10 @@ const getMethodFromRequest = (request) => {
 
 const getBodyFromRequest = (request) => {
   if (request.Records && request.Records[0].cf.request.body) {
-    return request.Records[0].cf.request.body.data;
+    let body = request.Records[0].cf.request.body.data;
+    let buff = Buffer.from(body, 'base64');
+    let text = buff.toString('ascii');
+    return text;
   }
   return "";
 };
@@ -182,53 +186,41 @@ function canRequestProceed(service) {
 }
 
 async function processRequest(service, request) {
-  let timeoutId;
   const method = getMethodFromRequest(request);
-  const body = getBodyFromRequest(request);
+  const body = await getBodyFromRequest(request);
   const headers = getHeadersFromRequest(request);
+  const fetchObj = ['GET', 'HEAD'].includes(method)
+    ? { method, headers }
+    : { method, headers, body };
+  let timeoutId;
+
   const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
-        key: "@NETWORK_FAILURE_" + service.ID + "_" + Date.now(),
+        key: '@NETWORK_FAILURE_' + service.ID + Date.now(),
         status: 522,
       });
     }, service.MAX_LATENCY);
   });
 
-  const fetchPromise = new Promise((resolve, reject) => {
-    const req = https.request(
-      Object.assign({}, url.parse(service.ID), { method, headers }),
-      (res) => {
-        let body = '';
-        let failure, key;
+  const fetchPromise = fetch(service.ID, fetchObj).then(async (data) => {
+    clearTimeout(timeoutId);
+    
+    let failure = false;
+    let key = '@SUCCESS_' + service.ID + Date.now();
 
-        res.setEncoding("utf8");
-        res.on("data", (data) => (body += data));
+    data = await data.json();
+    const body = JSON.stringify(data);
+    const headers = data.headers;
+    const status = data.status;
 
-        res.on("end", () => {
-          clearTimeout(timeoutId);
-          if (res.statusCode >= 400) {
-            failure = true;
-            key = "@SERVICE_FAILURE_" + service.ID + "_" + Date.now();
-          } else {
-            failure = false;
-            key = "@SUCCESS_" + service.ID + "_" + Date.now();
-          }
+    if (Number(status) >= 500) {
+      failure = true;
+      key = '@SERVICE_FAILURE_' + service.ID + Date.now();
+    }
 
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            body,
-            failure,
-            key,
-          });
-        });
-      }
-    );
-
-    req.write(body);
-    req.end();
+    return { body, headers, failure, key, status };
   });
 
   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
@@ -314,7 +306,7 @@ async function requestLogCount(service) {
       obj.ID.includes(service.ID) &&
       obj.TIME * 1000 > Date.now() - service.ERROR_TIMEOUT * 1000
   );
-  console.log(log);
+
   const serviceFailures = log.filter((obj) =>
     obj.ID.includes("@SERVICE_FAILURE_")
   ).length;
@@ -352,7 +344,7 @@ const blacklistedHeaders = [
   "x-accel-redirect",
   "x-cache",
   "x-edge",
-  "x-forward-proto",
+  "x-forwarded-proto",
   "x-real-ip",
 ];
 
@@ -365,7 +357,7 @@ const fixHeaders = (response) => {
 
   Object.keys(response.headers).forEach((key) => {
     response.headers[key] = [{ value: response.headers[key] }];
-    if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key)) {
+    if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key) || key.includes('x-amzn')) {
       delete response.headers[key];
     }
   });
