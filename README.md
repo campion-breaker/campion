@@ -42,18 +42,25 @@ Start every command with `campion <commandName>`, to use Campion with Cloudflare
 | `wipe` | Wipes Campion completely from your cloud provider. Within Cloudflare, the entire wiping happens in a matter of seconds. In AWS, however, it can take up to a few hours given that AWS requires that the circuit breaker code be completely removed from the Cloudfront distribution (this is how Campion is able to be distributed to the edge). If you have Campion deployed on AWS, you're able to run the `wipe` command as often as you'd like to check if Campion has finished wiping |
 
 ## Service Configuration
-
 | Property | Definition |
-|------------|-----------|
+|------------|----------|
 | `Service url` | The public url to the service that you're trying to call |
 | `Service name` | The public url to the service that you're trying to call |
 | `Max latency` | The amount of time in milliseconds that Campion should wait until the request is considered to have failed |
 | `Timespan` | The timespan in milliseconds that Campion should consider when calculating the number of failed requests in order deem a service to be down and flip the circuit OPEN |
 | `Network failures` | The number of network failures (within timespan) that will flip the circuit OPEN |
-| `Service failures` | The number of service failures (within timespan) that will flip the circuit OPEN |
+| `Service failures` | The number of service failures, 500-level responses, (within timespan) that will flip the circuit OPEN |
 | `Error timeout` | The amount of time in milliseconds that Campion should wait before fliping the circuit from OPEN to HALF-OPEN |
 | `Percent of requests` | The percent of requests that Campion should allow to hit the protected service when attempting to switch from HALF-OPEN to CLOSED |
 | `Success threshold` | The number of successfull requests (within timespan) that will flip the circuit from HALF-OPEN to CLOSED |
+
+## Circuit State
+| State | Definition |
+|----------|---------|
+| `CLOSED` | All traffic is allowed to hit the service |
+| `OPEN` | No traffic is allowed to hit the service. The service has failed, either because it has reached its network failure or service failure count |
+| `HALF-OPEN` | Only a portion of the traffic is allowed to attempt to hit the service as an auto-recovery measure |
+| `FORCED-OPEN` | This is a developer testing tool that will block all traffic to the service indefinitely until the breaker is flipped back manually |
 
 ## Metrics
 Campion comes with a beautiful seamlessly integrated metrics UI. To see how your services are performing, what the traffic looks like, what the current services and their configurations look like, and when and how the state of your circuits changed, simply type `campion stats` for Cloudflare, or `campionaws stats` for AWS, from your CLI.
