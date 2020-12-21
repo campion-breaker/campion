@@ -32,7 +32,7 @@ Start every command with `campion <commandName>`, to use Campion with Cloudflare
 
 | Command | Action |
 |---------|--------|
-| `setup` | Sets up Campion and deploys all necessary code to the cloud provider of your choice |
+| `setup` | Sets up Campion and deploys all necessary code to the cloud provider of your choice. In AWS this can take up to 30 minutes |
 | `add` | Adds a service to be protected by Campion |
 | `update` | Updates any service you have with new configuration |
 | `delete` | Deletes any service |
