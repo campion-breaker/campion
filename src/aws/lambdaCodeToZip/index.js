@@ -202,29 +202,34 @@ async function processRequest(service, request) {
     }, service.MAX_LATENCY);
   });
 
-  const fetchPromise = fetch(service.ID, fetchObj).then(async (data) => {
-    clearTimeout(timeoutId);
-    
-    let failure = false;
-    let key = '@SUCCESS_' + service.ID + Date.now();
+  const fetchPromise = fetch(service.ID, fetchObj).then(async response => {
+    let result = '';    
+    response.body.on('readable', () => {
+      let chunk;
+      while (null !== (chunk = response.body.read())) {
+        result += chunk.toString();
+      };
+    });  
 
-    data = await data.json();
-    const body = JSON.stringify(data);
-    const headers = data.headers;
-    const status = data.status;
-
-    if (Number(status) >= 500) {
-      failure = true;
-      key = '@SERVICE_FAILURE_' + service.ID + Date.now();
-    }
-
-    return { body, headers, failure, key, status };
-  });
-
+    return await new Promise((resolutionFunc, rej) => {
+      response.body.on('end', () => {
+      clearTimeout(timeoutId);
+      
+      const headers = Object.fromEntries(response.headers.entries());
+      const status = response.status;
+      const [failure, key] = Number(status) >= 500 
+        ? [true, '@SERVICE_FAILURE_' + service.ID + Date.now()] 
+        : [false, '@SUCCESS_' + service.ID + Date.now()];
+        
+      resolutionFunc({ body: result, headers, failure, key, status });
+    });
+  })});
+  
   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
     return value;
   });
-}
+};
+
 
 async function setStateWhenClosed(service) {
   const { serviceFailures, networkFailures } = await requestLogCount(service);
@@ -359,7 +364,7 @@ const fixHeaders = (response) => {
       delete response.headers[key];
     }
   });
-
+  console.log('HEAD', response.headers)
   return response;
 };
 
