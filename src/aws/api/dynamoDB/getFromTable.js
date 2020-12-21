@@ -1,4 +1,4 @@
-const sdk = require('../sdk')();
+const sdk = require('../sdk');
 
 const formatItem = (item) => {
   const result = {};
