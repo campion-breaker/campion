@@ -1,16 +1,15 @@
 const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient();
-const fetch = require("node-fetch");
+const https = require("https");
+const url = require("url");
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
   const service = await dbConfigRead("SERVICES_CONFIG", serviceId);
   const receivedTime = Date.now();
-
   if (!service || service.statusCode === 500) {
     return newResponse("Circuit breaker doesn't exist", 404);
   }
-
   if (service.CIRCUIT_STATE === "FORCED-OPEN") {
     await logRequestMetrics(receivedTime, service);
     return newResponse(
@@ -18,7 +17,6 @@ async function handleRequest(request) {
       504
     );
   }
-
   if (service.CIRCUIT_STATE === "OPEN") {
     await setStateWhenOpen(service);
     if (service.CIRCUIT_STATE === "OPEN") {
@@ -26,7 +24,6 @@ async function handleRequest(request) {
       return newResponse("Circuit is open", 504);
     }
   }
-
   if (service.CIRCUIT_STATE === "HALF-OPEN" && !canRequestProceed(service)) {
     await logRequestMetrics(receivedTime, service);
     return newResponse("Circuit is half-open", 504);
@@ -34,42 +31,37 @@ async function handleRequest(request) {
 
   const response = await processRequest(service, request);
   const responseTime = Date.now();
-
   await updateCircuitState(service, response);
   await logRequestMetrics(receivedTime, service, responseTime, response.status);
-
-  return newResponse(response.body, response.status, response.headers);
+  return newResponse(
+    response.body,
+    response.status,
+    response.headers,
+    response.bodyEncoding
+  );
 }
-
 const getIdFromUrl = (request) => {
   if (request.Records && request.Records[0].cf.request.querystring) {
     return request.Records[0].cf.request.querystring.slice(3);
   }
   return "";
 };
-
 const getMethodFromRequest = (request) => {
   if (request.Records && request.Records[0].cf.request.method) {
     return request.Records[0].cf.request.method;
   }
   return "GET";
 };
-
 const getBodyFromRequest = (request) => {
   if (request.Records && request.Records[0].cf.request.body) {
-    let body = request.Records[0].cf.request.body.data;
-    let buff = Buffer.from(body, 'base64');
-    let text = buff.toString('ascii');
-    return text;
+    return request.Records[0].cf.request.body.data;
   }
   return "";
 };
-
 const getHeadersFromRequest = (request) => {
   const headersObj = request.Records[0].cf.request.headers;
   const headerKeys = Object.keys(headersObj);
   const formattedHeaders = {};
-
   headerKeys.forEach((key) => {
     const header = headersObj[key][0];
     if (
@@ -80,13 +72,10 @@ const getHeadersFromRequest = (request) => {
       return;
     formattedHeaders[header["key"]] = header["value"];
   });
-
   return formattedHeaders;
 };
-
 async function flipState(service, newState) {
   await logEventStateChange(service, newState);
-
   const params = {
     TableName: "SERVICES_CONFIG",
     Key: {
@@ -99,7 +88,6 @@ async function flipState(service, newState) {
     },
     ReturnValues: "UPDATED_NEW",
   };
-
   try {
     const data = await documentClient.update(params).promise();
     return { statusCode: 200 };
@@ -110,7 +98,6 @@ async function flipState(service, newState) {
     };
   }
 }
-
 async function putDB(tableName, items) {
   const params = {
     TableName: tableName,
@@ -118,7 +105,6 @@ async function putDB(tableName, items) {
       ...items,
     },
   };
-
   try {
     const data = await documentClient.put(params).promise();
     const response = {
@@ -132,7 +118,6 @@ async function putDB(tableName, items) {
     };
   }
 }
-
 async function dbConfigRead(tableName, serviceName) {
   const params = {
     TableName: tableName,
@@ -140,7 +125,6 @@ async function dbConfigRead(tableName, serviceName) {
       ID: serviceName,
     },
   };
-
   try {
     const data = await documentClient.get(params).promise();
     const response = data.Item;
@@ -151,12 +135,10 @@ async function dbConfigRead(tableName, serviceName) {
     };
   }
 }
-
 async function dbFailureRead(tableName) {
   const params = {
     TableName: tableName,
   };
-
   try {
     const data = await documentClient.scan(params).promise();
     const response = data.Items;
@@ -167,15 +149,22 @@ async function dbFailureRead(tableName) {
     };
   }
 }
-
-const newResponse = (body = "", status = 200, headers = {}) => {
-  return {
-    status,
-    headers,
-    body,
-  };
+const newResponse = (body = "", status = 200, headers = {}, bodyEncoding) => {
+  if (bodyEncoding) {
+    return {
+      status,
+      headers,
+      body,
+      bodyEncoding,
+    };
+  } else {
+    return {
+      status,
+      headers,
+      body,
+    };
+  }
 };
-
 function canRequestProceed(service) {
   const min = 1;
   const max = Math.floor(100 / service.PERCENT_OF_REQUESTS);
@@ -185,50 +174,65 @@ function canRequestProceed(service) {
 
 async function processRequest(service, request) {
   const method = getMethodFromRequest(request);
-  const body = await getBodyFromRequest(request);
+  const reqBody = getBodyFromRequest(request);
   const headers = getHeadersFromRequest(request);
-  const fetchObj = ['GET', 'HEAD'].includes(method)
-    ? { method, headers }
-    : { method, headers, body };
   let timeoutId;
-
   const timeoutPromise = new Promise((resolutionFunc) => {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
-        key: '@NETWORK_FAILURE_' + service.ID + Date.now(),
+        key: "@NETWORK_FAILURE_" + service.ID + Date.now(),
         status: 522,
       });
     }, service.MAX_LATENCY);
   });
 
-  const fetchPromise = fetch(service.ID, fetchObj).then(async (data) => {
-    clearTimeout(timeoutId);
-    
-    let failure = false;
-    let key = '@SUCCESS_' + service.ID + Date.now();
+  const fetchPromise = new Promise((resolve, reject) => {
+    const req = https.request(
+      Object.assign({}, url.parse(service.ID), { method, headers }),
+      (res) => {
+        const headers = res.headers;
+        const status = res.statusCode;
+        let chunks = [];
+        let failure, key;
 
-    data = await data.json();
-    const body = JSON.stringify(data);
-    const headers = data.headers;
-    const status = data.status;
+        res.on("data", (data) => {
+          chunks.push(data);
+        });
 
-    if (Number(status) >= 500) {
-      failure = true;
-      key = '@SERVICE_FAILURE_' + service.ID + Date.now();
-    }
+        res.on("end", () => {
+          clearTimeout(timeoutId);
 
-    return { body, headers, failure, key, status };
+          if (res.statusCode >= 400) {
+            failure = true;
+            key = "@SERVICE_FAILURE_" + service.ID + "_" + Date.now();
+          } else {
+            failure = false;
+            key = "@SUCCESS_" + service.ID + "_" + Date.now();
+          }
+
+          const body = Buffer.concat(chunks).toString("base64");
+          resolve({
+            body,
+            bodyEncoding: "base64",
+            headers,
+            failure,
+            key,
+            status,
+          });
+        });
+      }
+    );
+    req.on("error", (e) => console.log("errrooor", e));
+    req.end(reqBody, "base64");
   });
 
   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
     return value;
   });
 }
-
 async function setStateWhenClosed(service) {
   const { serviceFailures, networkFailures } = await requestLogCount(service);
-
   if (
     serviceFailures >= service.SERVICE_FAILURE_THRESHOLD ||
     networkFailures >= service.NETWORK_FAILURE_THRESHOLD
@@ -236,22 +240,18 @@ async function setStateWhenClosed(service) {
     await flipState(service, "OPEN");
   }
 }
-
 async function setStateWhenOpen(service) {
   const now = Date.now();
   const oldDate = service.UPDATED_TIME;
-  const differenceInMS = (now - oldDate);
-
+  const differenceInMS = now - oldDate;
   if (differenceInMS >= service.ERROR_TIMEOUT) {
     await flipState(service, "HALF-OPEN");
   }
 }
-
 async function setStateWhenHalfOpen(service) {
   const { successes, serviceFailures, networkFailures } = await requestLogCount(
     service
   );
-
   if (successes >= service.SUCCESS_THRESHOLD) {
     await flipState(service, "CLOSED");
   } else if (
@@ -261,7 +261,6 @@ async function setStateWhenHalfOpen(service) {
     await flipState(service, "OPEN");
   }
 }
-
 async function updateCircuitState(service, response) {
   if (
     response.failure ||
@@ -272,7 +271,6 @@ async function updateCircuitState(service, response) {
       TIME: (Date.now() + service.ERROR_TIMEOUT) / 1000,
     });
   }
-
   switch (service.CIRCUIT_STATE) {
     case "CLOSED":
       await setStateWhenClosed(service);
@@ -282,7 +280,6 @@ async function updateCircuitState(service, response) {
       break;
   }
 }
-
 async function logEventStateChange(service, newState) {
   const stateChangeEntry = {
     ID: service.ID + "_" + Date.now(),
@@ -293,10 +290,8 @@ async function logEventStateChange(service, newState) {
     CIRCUIT_STATE: newState,
     MODE: "AUTO",
   };
-
   await putDB("EVENTS", stateChangeEntry);
 }
-
 async function requestLogCount(service) {
   const list = await dbFailureRead("REQUEST_LOG");
   const log = list.filter(
@@ -304,7 +299,6 @@ async function requestLogCount(service) {
       obj.ID.includes(service.ID) &&
       obj.TIME * 1000 > Date.now() - service.TIMESPAN
   );
-
   const serviceFailures = log.filter((obj) =>
     obj.ID.includes("@SERVICE_FAILURE_")
   ).length;
@@ -314,7 +308,6 @@ async function requestLogCount(service) {
   const successes = log.filter((obj) => obj.ID.includes("@SUCCESS_")).length;
   return { serviceFailures, networkFailures, successes };
 }
-
 async function logRequestMetrics(receivedTime, service, responseTime, status) {
   const key = {
     ID: service.ID + "_" + receivedTime,
@@ -323,13 +316,13 @@ async function logRequestMetrics(receivedTime, service, responseTime, status) {
     TIME: receivedTime,
     LATENCY: responseTime - receivedTime || "",
   };
-
   await putDB("TRAFFIC", key);
 }
-
 const blacklistedHeaders = [
+  "set-cookie",
   "connection",
   "expect",
+  "etag",
   "keep-alive",
   "proxy-authenticate",
   "proxy-authorization",
@@ -345,26 +338,27 @@ const blacklistedHeaders = [
   "x-forwarded-proto",
   "x-real-ip",
 ];
-
 const readOnlyHeaders = ["content-length", "host", "transfer-encoding", "via"];
-
 const fixHeaders = (response) => {
   response.headers["access-control-allow-origin"] = "*";
   response.headers["access-control-allow-methods"] = "*";
   response.headers["access-control-max-age"] = "86400";
-
   Object.keys(response.headers).forEach((key) => {
     response.headers[key] = [{ value: response.headers[key] }];
-    if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key) || key.includes('x-amzn')) {
+    if (
+      blacklistedHeaders.includes(key) ||
+      readOnlyHeaders.includes(key) ||
+      key.includes("x-amzn")
+    ) {
       delete response.headers[key];
     }
   });
-
   return response;
 };
 
 exports.handler = async (event, context, callback) => {
   const response = await handleRequest(event);
   context.callbackWaitsForEmptyEventLoop = false;
-  return callback(null, fixHeaders(response));
+  const fixedHeaders = fixHeaders(response);
+  return callback(null, fixedHeaders);
 };
