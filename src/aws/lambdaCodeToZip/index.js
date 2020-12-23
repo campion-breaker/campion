@@ -187,6 +187,7 @@ async function processRequest(service, request) {
     }, service.MAX_LATENCY);
   });
 
+<<<<<<< HEAD
   const fetchPromise = new Promise((resolve, reject) => {
     const req = https.request(
       Object.assign({}, url.parse(service.ID), { method, headers }),
@@ -231,6 +232,37 @@ async function processRequest(service, request) {
     return value;
   });
 }
+=======
+  const fetchPromise = fetch(service.ID, fetchObj).then(async response => {
+    let result = '';    
+    response.body.on('readable', () => {
+      let chunk;
+      while (null !== (chunk = response.body.read())) {
+        result += chunk.toString();
+      };
+    });  
+
+    return await new Promise((resolutionFunc, rej) => {
+      response.body.on('end', () => {
+      clearTimeout(timeoutId);
+      
+      const headers = Object.fromEntries(response.headers.entries());
+      const status = response.status;
+      const [failure, key] = Number(status) >= 500 
+        ? [true, '@SERVICE_FAILURE_' + service.ID + Date.now()] 
+        : [false, '@SUCCESS_' + service.ID + Date.now()];
+        
+      resolutionFunc({ body: result, headers, failure, key, status });
+    });
+  })});
+  
+  return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
+    return value;
+  });
+};
+
+
+>>>>>>> cb98aa1bdbfef279ae5daba7c34c17204ec27fd6
 async function setStateWhenClosed(service) {
   const { serviceFailures, networkFailures } = await requestLogCount(service);
   if (
@@ -353,6 +385,10 @@ const fixHeaders = (response) => {
       delete response.headers[key];
     }
   });
+<<<<<<< HEAD
+=======
+  console.log('HEAD', response.headers)
+>>>>>>> cb98aa1bdbfef279ae5daba7c34c17204ec27fd6
   return response;
 };
 
