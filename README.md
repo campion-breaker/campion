@@ -27,6 +27,13 @@ Campion is an edge-based serverless framework for implementing circuit-breaking 
 1) Clone this repo
 2) From the root, run `npm install -g` to install the dependencies
 
+## Cloud Providers
+| Provider | Trade-offs |
+|---------|--------|
+| Cloudflare | Cloudflare Workers is an incredible platform. When a user deploys Campion on Workers, it deploys and functions almost instantly. In our tests, it proved to be faster than the Amazon offering, both in initial setup and with throughput on requests. On average, Workers was 28% faster than Lambda@Edge from an end-user perspective when processing a request and returning a response |
+| AWS | For those who already have an AWS account, Lambda@Edge is a great option. The biggest thing to be aware of here is that AWS’s CDN takes longer to replicate than Cloudflare’s does. What this means is that deploying Campion on AWS can take up to thirty minutes before the code rolls out to all the servers on the CDN. Similarly, deleting Campion from Lambda@Edge can take several hours. Of course, once it’s deployed, Campion works great on Lambda@Edge. It's also worth mentioning that AWS imposes a limit of 53.2 KB of data that can be transferred |
+
+
 ## Commands
 Start every command with `campion <commandName>`, to use Campion with Cloudflare, and `campionaws <commandName>`, to use Campion with AWS. For example, `campion setup` or `campionaws stats`.
 
