@@ -1,7 +1,9 @@
 const AWS = require("aws-sdk");
 const documentClient = new AWS.DynamoDB.DocumentClient();
+const fetch = require("node-fetch");
 const https = require("https");
-const url = require("url");
+const url = require("url")
+const zlib = require("zlib");
 
 async function handleRequest(request) {
   const serviceId = getIdFromUrl(request);
@@ -28,17 +30,12 @@ async function handleRequest(request) {
     await logRequestMetrics(receivedTime, service);
     return newResponse("Circuit is half-open", 504);
   }
-
+  
   const response = await processRequest(service, request);
   const responseTime = Date.now();
   await updateCircuitState(service, response);
   await logRequestMetrics(receivedTime, service, responseTime, response.status);
-  return newResponse(
-    response.body,
-    response.status,
-    response.headers,
-    response.bodyEncoding
-  );
+  return newResponse(response.body, response.status, response.headers, response.bodyEncoding);
 }
 const getIdFromUrl = (request) => {
   if (request.Records && request.Records[0].cf.request.querystring) {
@@ -152,17 +149,17 @@ async function dbFailureRead(tableName) {
 const newResponse = (body = "", status = 200, headers = {}, bodyEncoding) => {
   if (bodyEncoding) {
     return {
-      status,
-      headers,
-      body,
-      bodyEncoding,
-    };
+    status,
+    headers,
+    body,
+    bodyEncoding,
+    }
   } else {
     return {
       status,
       headers,
-      body,
-    };
+      body
+    }
   }
 };
 function canRequestProceed(service) {
@@ -181,24 +178,23 @@ async function processRequest(service, request) {
     timeoutId = setTimeout(() => {
       resolutionFunc({
         failure: true,
-        key: "@NETWORK_FAILURE_" + service.ID + Date.now(),
+        key: '@NETWORK_FAILURE_' + service.ID + Date.now(),
         status: 522,
       });
     }, service.MAX_LATENCY);
   });
 
-<<<<<<< HEAD
   const fetchPromise = new Promise((resolve, reject) => {
     const req = https.request(
-      Object.assign({}, url.parse(service.ID), { method, headers }),
+      Object.assign({}, url.parse(service.ID), {method, headers}),
       (res) => {
         const headers = res.headers;
         const status = res.statusCode;
         let chunks = [];
         let failure, key;
 
-        res.on("data", (data) => {
-          chunks.push(data);
+        res.on("data", data => {
+          chunks.push(data)
         });
 
         res.on("end", () => {
@@ -211,58 +207,20 @@ async function processRequest(service, request) {
             failure = false;
             key = "@SUCCESS_" + service.ID + "_" + Date.now();
           }
-
-          const body = Buffer.concat(chunks).toString("base64");
-          resolve({
-            body,
-            bodyEncoding: "base64",
-            headers,
-            failure,
-            key,
-            status,
-          });
+          
+          const body = Buffer.concat(chunks).toString('base64');
+          resolve({ body, bodyEncoding: 'base64', headers, failure, key, status });
         });
       }
     );
-    req.on("error", (e) => console.log("errrooor", e));
-    req.end(reqBody, "base64");
+    req.on('error', (e) => console.log('errrooor', e))
+    req.end(reqBody, 'base64');
   });
-
-  return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
-    return value;
-  });
-}
-=======
-  const fetchPromise = fetch(service.ID, fetchObj).then(async response => {
-    let result = '';    
-    response.body.on('readable', () => {
-      let chunk;
-      while (null !== (chunk = response.body.read())) {
-        result += chunk.toString();
-      };
-    });  
-
-    return await new Promise((resolutionFunc, rej) => {
-      response.body.on('end', () => {
-      clearTimeout(timeoutId);
-      
-      const headers = Object.fromEntries(response.headers.entries());
-      const status = response.status;
-      const [failure, key] = Number(status) >= 500 
-        ? [true, '@SERVICE_FAILURE_' + service.ID + Date.now()] 
-        : [false, '@SUCCESS_' + service.ID + Date.now()];
-        
-      resolutionFunc({ body: result, headers, failure, key, status });
-    });
-  })});
   
   return await Promise.race([fetchPromise, timeoutPromise]).then((value) => {
     return value;
   });
 };
-
-
->>>>>>> cb98aa1bdbfef279ae5daba7c34c17204ec27fd6
 async function setStateWhenClosed(service) {
   const { serviceFailures, networkFailures } = await requestLogCount(service);
   if (
@@ -275,7 +233,7 @@ async function setStateWhenClosed(service) {
 async function setStateWhenOpen(service) {
   const now = Date.now();
   const oldDate = service.UPDATED_TIME;
-  const differenceInMS = now - oldDate;
+  const differenceInMS = (now - oldDate);
   if (differenceInMS >= service.ERROR_TIMEOUT) {
     await flipState(service, "HALF-OPEN");
   }
@@ -377,18 +335,10 @@ const fixHeaders = (response) => {
   response.headers["access-control-max-age"] = "86400";
   Object.keys(response.headers).forEach((key) => {
     response.headers[key] = [{ value: response.headers[key] }];
-    if (
-      blacklistedHeaders.includes(key) ||
-      readOnlyHeaders.includes(key) ||
-      key.includes("x-amzn")
-    ) {
+    if (blacklistedHeaders.includes(key) || readOnlyHeaders.includes(key) || key.includes('x-amzn')) {
       delete response.headers[key];
     }
   });
-<<<<<<< HEAD
-=======
-  console.log('HEAD', response.headers)
->>>>>>> cb98aa1bdbfef279ae5daba7c34c17204ec27fd6
   return response;
 };
 
@@ -398,3 +348,5 @@ exports.handler = async (event, context, callback) => {
   const fixedHeaders = fixHeaders(response);
   return callback(null, fixedHeaders);
 };
+
+
