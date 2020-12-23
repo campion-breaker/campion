@@ -63,7 +63,6 @@ const getHeadersFromRequest = (request) => {
     const header = headersObj[key][0];
     if (
       key.includes("sec-") ||
-      key.includes("accept-encoding") ||
       key.includes("host")
     )
       return;
