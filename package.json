@@ -1,6 +1,6 @@
 {
   "name": "campion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Circuit Breaker",
   "main": "campionApiTesting.js",
   "bin": {
