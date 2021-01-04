@@ -24,7 +24,7 @@ Campion is an edge-based serverless framework for implementing circuit-breaking 
 
 ### Steps
 
-1) Run `npm install campion` to install.
+1) Run `npm install campion -g` to install.
 2) Type `campion` or `campionaws` to use.
 
 ## Cloud Providers
